@@ -1,6 +1,6 @@
 /*
  * CppSQLite
- * Developed by Rob Greeves <rob.groves@btinternet.com>
+ * Developed by Rob Groves <rob.groves@btinternet.com>
  * Maintained by NeoSmart Technologies <http://neosmart.net/>
  * See LICENSE file for copyright and license info
 */
