@@ -240,6 +240,7 @@ public:
 
     void bind(int nParam, const char* szValue);
     void bind(int nParam, const int nValue);
+    void bind(int nParam, const long long nValue);
     void bind(int nParam, const double dwValue);
     void bind(int nParam, const unsigned char* blobValue, int nLen);
     void bindNull(int nParam);
