@@ -1,30 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-// CppSQLite3 - A C++ wrapper around the SQLite3 embedded database library.
-//
-// Copyright (c) 2004 Rob Groves. All Rights Reserved. rob.groves@btinternet.com
-// 
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement, is hereby granted, provided that the above copyright notice, 
-// this paragraph and the following two paragraphs appear in all copies, 
-// modifications, and distributions.
-//
-// IN NO EVENT SHALL THE AUTHOR BE LIABLE TO ANY PARTY FOR DIRECT,
-// INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST
-// PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION,
-// EVEN IF THE AUTHOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE AUTHOR SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-// PARTICULAR PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF
-// ANY, PROVIDED HEREUNDER IS PROVIDED "AS IS". THE AUTHOR HAS NO OBLIGATION
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-//
-// V3.0		03/08/2004	-Initial Version for sqlite3
-//
-// V3.1		16/09/2004	-Implemented getXXXXField using sqlite3 functions
-//						-Added CppSQLiteDB3::tableExists()
-////////////////////////////////////////////////////////////////////////////////
+/*
+ * CppSQLite
+ * Developed by Rob Greeves <rob.groves@btinternet.com>
+ * Maintained by NeoSmart Technologies <http://neosmart.net/>
+ * See LICENSE file for copyright and license info
+*/
+
 #include "CppSQLite3.h"
 #include <cstdlib>
 
