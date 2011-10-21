@@ -25,7 +25,7 @@ int sqlite3_decode_binary(const unsigned char *in, unsigned char *out);
 ////////////////////////////////////////////////////////////////////////////////
 
 CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
-									char* szErrMess,
+									const char* szErrMess,
 									bool bDeleteMsg/*=true*/) :
 									mnErrCode(nErrCode)
 {
@@ -36,7 +36,7 @@ CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
 
 	if (bDeleteMsg && szErrMess)
 	{
-		sqlite3_free(szErrMess);
+		sqlite3_free((void*)szErrMess);
 	}
 }
 
