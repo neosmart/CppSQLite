@@ -120,8 +120,8 @@ public:
     int getIntField(int nField, int nNullValue=0);
     int getIntField(const char* szField, int nNullValue=0);
 	
-    int getInt64Field(int nField, long long nNullValue=0);
-    int getInt64Field(const char* szField, long long nNullValue=0);
+    long long getInt64Field(int nField, long long nNullValue=0);
+    long long getInt64Field(const char* szField, long long nNullValue=0);
 
     double getFloatField(int nField, double fNullValue=0.0);
     double getFloatField(const char* szField, double fNullValue=0.0);

@@ -377,7 +377,7 @@ int CppSQLite3Query::getIntField(const char* szField, int nNullValue/*=0*/)
 }
 
 
-int CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/)
+long long CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/)
 {
 	if (fieldDataType(nField) == SQLITE_NULL)
 	{
@@ -390,7 +390,7 @@ int CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/)
 }
 
 
-int CppSQLite3Query::getInt64Field(const char* szField, long long nNullValue/*=0*/)
+long long CppSQLite3Query::getInt64Field(const char* szField, long long nNullValue/*=0*/)
 {
 	int nField = fieldIndex(szField);
 	return getIntField(nField, nNullValue);
