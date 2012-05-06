@@ -98,7 +98,7 @@ public:
     CppSQLite3Query(const CppSQLite3Query& rQuery);
 
     CppSQLite3Query(sqlite3* pDB,
-				sqlite3_stmt* pVM,
+                sqlite3_stmt* pVM,
                 bool bEof,
                 bool bOwnVM=true);
 
@@ -119,7 +119,7 @@ public:
 
     int getIntField(int nField, int nNullValue=0);
     int getIntField(const char* szField, int nNullValue=0);
-	
+    
     long long getInt64Field(int nField, long long nNullValue=0);
     long long getInt64Field(const char* szField, long long nNullValue=0);
 
@@ -145,7 +145,7 @@ private:
 
     void checkVM();
 
-	sqlite3* mpDB;
+    sqlite3* mpDB;
     sqlite3_stmt* mpVM;
     bool mbEof;
     int mnCols;
@@ -254,7 +254,7 @@ public:
 
     void close();
 
-	bool tableExists(const char* szTable);
+    bool tableExists(const char* szTable);
 
     int execDML(const char* szSQL);
 
