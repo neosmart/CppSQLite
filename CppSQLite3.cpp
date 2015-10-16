@@ -14,6 +14,9 @@
 // that cannot be deleted.
 static const bool DONT_DELETE_MSG=false;
 
+// Error message used when throwing CppSQLite3Exception when allocations fail.
+static const char* const ALLOCATION_ERROR_MESSAGE = "Cannot allocate memory";
+
 ////////////////////////////////////////////////////////////////////////////////
 // Prototypes for SQLite functions not included in SQLite DLL, but copied below
 // from SQLite encode.c
@@ -39,7 +42,7 @@ SQLite3Memory::SQLite3Memory(int nBufferLen) :
     if (!mpBuf && mnBufferLen>0)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
 }
@@ -51,7 +54,7 @@ SQLite3Memory::SQLite3Memory(const char* szFormat, va_list list) :
     if (!mpBuf)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
     mnBufferLen = std::strlen(static_cast<char const*>(mpBuf))+1;
@@ -69,7 +72,7 @@ SQLite3Memory::SQLite3Memory(SQLite3Memory const& other) :
     if (!mpBuf && mnBufferLen>0)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
     std::memcpy(mpBuf, other.mpBuf, mnBufferLen);
@@ -253,7 +256,7 @@ void CppSQLite3Binary::setEncoded(const unsigned char* pBuf)
     if (!mpBuf)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
 
@@ -320,7 +323,7 @@ unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
     if (!mpBuf)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
 
