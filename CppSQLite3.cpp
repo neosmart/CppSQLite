@@ -191,26 +191,9 @@ CppSQLite3Exception::~CppSQLite3Exception()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-CppSQLite3Buffer::CppSQLite3Buffer()
-{
-    mpBuf = 0;
-}
-
-
-CppSQLite3Buffer::~CppSQLite3Buffer()
-{
-    clear();
-}
-
-
 void CppSQLite3Buffer::clear()
 {
-    if (mpBuf)
-    {
-        sqlite3_free(mpBuf);
-        mpBuf = 0;
-    }
-
+    mBuf.clear();
 }
 
 
@@ -218,10 +201,18 @@ const char* CppSQLite3Buffer::format(const char* szFormat, ...)
 {
     clear();
     va_list va;
-    va_start(va, szFormat);
-    mpBuf = sqlite3_vmprintf(szFormat, va);
-    va_end(va);
-    return mpBuf;
+    try
+    {
+        va_start(va, szFormat);
+        mBuf = detail::SQLite3Memory(szFormat, va);
+        va_end(va);
+        return static_cast<const char*>(mBuf.getBuffer());
+    }
+    catch(CppSQLite3Exception&)
+    {
+        va_end(va);
+        throw;
+    }
 }
 
 

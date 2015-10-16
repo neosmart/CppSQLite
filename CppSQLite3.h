@@ -87,20 +87,15 @@ private:
 class CppSQLite3Buffer
 {
 public:
-
-    CppSQLite3Buffer();
-
-    ~CppSQLite3Buffer();
-
     const char* format(const char* szFormat, ...);
 
-    operator const char*() { return mpBuf; }
+    operator const char*() { return static_cast<char const*>(mBuf.getBuffer()); }
 
     void clear();
 
 private:
 
-    char* mpBuf;
+    detail::SQLite3Memory mBuf;
 };
 
 
