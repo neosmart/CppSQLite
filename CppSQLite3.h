@@ -14,6 +14,51 @@
 
 #define CPPSQLITE_ERROR 1000
 
+namespace detail
+{
+    /**
+     * RAII class for managing memory allocated by sqlite
+    */
+    class SQLite3Memory
+    {
+    public:
+
+        // Default constructor
+        SQLite3Memory();
+        // Constructor that allocates memory of a given size
+        SQLite3Memory(int nBufferLen);
+        // Constructor that formats a string with sqlite memory allocation
+        SQLite3Memory(const char* szFormat, va_list list);
+        // Destructor
+        ~SQLite3Memory();
+
+        // Copy constructor
+        SQLite3Memory(SQLite3Memory const& other);
+        // Copy assignment
+        SQLite3Memory& operator=(SQLite3Memory const& lhs);
+
+        // Move constructor
+        SQLite3Memory(SQLite3Memory&& other);
+        // Move assignment
+        SQLite3Memory& operator=(SQLite3Memory&& lhs);
+
+        // Swap operation
+        void swap(SQLite3Memory& other);
+
+        int getLength() const { return mnBufferLen; }
+
+        void* getBuffer() const { return mpBuf; }
+
+        void clear();
+
+    private:
+
+        int mnBufferLen;
+        void* mpBuf;
+    };
+}
+
+
 class CppSQLite3Exception
 {
 public:
