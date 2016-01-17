@@ -5,8 +5,8 @@
  * See LICENSE file for copyright and license info
 */
 
-#ifndef _CppSQLite3_H_
-#define _CppSQLite3_H_
+#ifndef CppSQLite3_H
+#define CppSQLite3_H
 
 #include <sqlite3.h>
 #include <cstdio>
