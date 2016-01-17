@@ -328,14 +328,14 @@ CppSQLite3Query& CppSQLite3Query::operator=(const CppSQLite3Query& rQuery)
 }
 
 
-int CppSQLite3Query::numFields()
+int CppSQLite3Query::numFields() const
 {
     checkVM();
     return mnCols;
 }
 
 
-const char* CppSQLite3Query::fieldValue(int nField)
+const char* CppSQLite3Query::fieldValue(int nField) const
 {
     checkVM();
 
@@ -350,14 +350,14 @@ const char* CppSQLite3Query::fieldValue(int nField)
 }
 
 
-const char* CppSQLite3Query::fieldValue(const char* szField)
+const char* CppSQLite3Query::fieldValue(const char* szField) const
 {
     int nField = fieldIndex(szField);
     return (const char*)sqlite3_column_text(mpVM, nField);
 }
 
 
-int CppSQLite3Query::getIntField(int nField, int nNullValue/*=0*/)
+int CppSQLite3Query::getIntField(int nField, int nNullValue/*=0*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
@@ -370,14 +370,14 @@ int CppSQLite3Query::getIntField(int nField, int nNullValue/*=0*/)
 }
 
 
-int CppSQLite3Query::getIntField(const char* szField, int nNullValue/*=0*/)
+int CppSQLite3Query::getIntField(const char* szField, int nNullValue/*=0*/) const
 {
     int nField = fieldIndex(szField);
     return getIntField(nField, nNullValue);
 }
 
 
-long long CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/)
+long long CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
@@ -390,14 +390,14 @@ long long CppSQLite3Query::getInt64Field(int nField, long long nNullValue/*=0*/)
 }
 
 
-long long CppSQLite3Query::getInt64Field(const char* szField, long long nNullValue/*=0*/)
+long long CppSQLite3Query::getInt64Field(const char* szField, long long nNullValue/*=0*/) const
 {
     int nField = fieldIndex(szField);
     return getInt64Field(nField, nNullValue);
 }
 
 
-double CppSQLite3Query::getFloatField(int nField, double fNullValue/*=0.0*/)
+double CppSQLite3Query::getFloatField(int nField, double fNullValue/*=0.0*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
@@ -410,14 +410,14 @@ double CppSQLite3Query::getFloatField(int nField, double fNullValue/*=0.0*/)
 }
 
 
-double CppSQLite3Query::getFloatField(const char* szField, double fNullValue/*=0.0*/)
+double CppSQLite3Query::getFloatField(const char* szField, double fNullValue/*=0.0*/) const
 {
     int nField = fieldIndex(szField);
     return getFloatField(nField, fNullValue);
 }
 
 
-const char* CppSQLite3Query::getStringField(int nField, const char* szNullValue/*=""*/)
+const char* CppSQLite3Query::getStringField(int nField, const char* szNullValue/*=""*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
@@ -430,14 +430,14 @@ const char* CppSQLite3Query::getStringField(int nField, const char* szNullValue/
 }
 
 
-const char* CppSQLite3Query::getStringField(const char* szField, const char* szNullValue/*=""*/)
+const char* CppSQLite3Query::getStringField(const char* szField, const char* szNullValue/*=""*/) const
 {
     int nField = fieldIndex(szField);
     return getStringField(nField, szNullValue);
 }
 
 
-const unsigned char* CppSQLite3Query::getBlobField(int nField, int& nLen)
+const unsigned char* CppSQLite3Query::getBlobField(int nField, int& nLen) const
 {
     checkVM();
 
@@ -453,27 +453,27 @@ const unsigned char* CppSQLite3Query::getBlobField(int nField, int& nLen)
 }
 
 
-const unsigned char* CppSQLite3Query::getBlobField(const char* szField, int& nLen)
+const unsigned char* CppSQLite3Query::getBlobField(const char* szField, int& nLen) const
 {
     int nField = fieldIndex(szField);
     return getBlobField(nField, nLen);
 }
 
 
-bool CppSQLite3Query::fieldIsNull(int nField)
+bool CppSQLite3Query::fieldIsNull(int nField) const
 {
     return (fieldDataType(nField) == SQLITE_NULL);
 }
 
 
-bool CppSQLite3Query::fieldIsNull(const char* szField)
+bool CppSQLite3Query::fieldIsNull(const char* szField) const
 {
     int nField = fieldIndex(szField);
     return (fieldDataType(nField) == SQLITE_NULL);
 }
 
 
-int CppSQLite3Query::fieldIndex(const char* szField)
+int CppSQLite3Query::fieldIndex(const char* szField) const
 {
     checkVM();
 
@@ -496,7 +496,7 @@ int CppSQLite3Query::fieldIndex(const char* szField)
 }
 
 
-const char* CppSQLite3Query::fieldName(int nCol)
+const char* CppSQLite3Query::fieldName(int nCol) const
 {
     checkVM();
 
@@ -511,7 +511,7 @@ const char* CppSQLite3Query::fieldName(int nCol)
 }
 
 
-const char* CppSQLite3Query::fieldDeclType(int nCol)
+const char* CppSQLite3Query::fieldDeclType(int nCol) const
 {
     checkVM();
 
@@ -526,7 +526,7 @@ const char* CppSQLite3Query::fieldDeclType(int nCol)
 }
 
 
-int CppSQLite3Query::fieldDataType(int nCol)
+int CppSQLite3Query::fieldDataType(int nCol) const
 {
     checkVM();
 
@@ -541,7 +541,7 @@ int CppSQLite3Query::fieldDataType(int nCol)
 }
 
 
-bool CppSQLite3Query::eof()
+bool CppSQLite3Query::eof() const
 {
     checkVM();
     return mbEof;
@@ -590,7 +590,7 @@ void CppSQLite3Query::finalize()
 }
 
 
-void CppSQLite3Query::checkVM()
+void CppSQLite3Query::checkVM() const
 {
     if (mpVM == 0)
     {
@@ -673,21 +673,21 @@ void CppSQLite3Table::finalize()
 }
 
 
-int CppSQLite3Table::numFields()
+int CppSQLite3Table::numFields() const
 {
     checkResults();
     return mnCols;
 }
 
 
-int CppSQLite3Table::numRows()
+int CppSQLite3Table::numRows() const
 {
     checkResults();
     return mnRows;
 }
 
 
-const char* CppSQLite3Table::fieldValue(int nField)
+const char* CppSQLite3Table::fieldValue(int nField) const
 {
     checkResults();
 
@@ -703,7 +703,7 @@ const char* CppSQLite3Table::fieldValue(int nField)
 }
 
 
-const char* CppSQLite3Table::fieldValue(const char* szField)
+const char* CppSQLite3Table::fieldValue(const char* szField) const
 {
     checkResults();
 
@@ -725,7 +725,7 @@ const char* CppSQLite3Table::fieldValue(const char* szField)
 }
 
 
-int CppSQLite3Table::getIntField(int nField, int nNullValue/*=0*/)
+int CppSQLite3Table::getIntField(int nField, int nNullValue/*=0*/) const
 {
     if (fieldIsNull(nField))
     {
@@ -738,7 +738,7 @@ int CppSQLite3Table::getIntField(int nField, int nNullValue/*=0*/)
 }
 
 
-int CppSQLite3Table::getIntField(const char* szField, int nNullValue/*=0*/)
+int CppSQLite3Table::getIntField(const char* szField, int nNullValue/*=0*/) const
 {
     if (fieldIsNull(szField))
     {
@@ -751,7 +751,7 @@ int CppSQLite3Table::getIntField(const char* szField, int nNullValue/*=0*/)
 }
 
 
-double CppSQLite3Table::getFloatField(int nField, double fNullValue/*=0.0*/)
+double CppSQLite3Table::getFloatField(int nField, double fNullValue/*=0.0*/) const
 {
     if (fieldIsNull(nField))
     {
@@ -764,7 +764,7 @@ double CppSQLite3Table::getFloatField(int nField, double fNullValue/*=0.0*/)
 }
 
 
-double CppSQLite3Table::getFloatField(const char* szField, double fNullValue/*=0.0*/)
+double CppSQLite3Table::getFloatField(const char* szField, double fNullValue/*=0.0*/) const
 {
     if (fieldIsNull(szField))
     {
@@ -777,7 +777,7 @@ double CppSQLite3Table::getFloatField(const char* szField, double fNullValue/*=0
 }
 
 
-const char* CppSQLite3Table::getStringField(int nField, const char* szNullValue/*=""*/)
+const char* CppSQLite3Table::getStringField(int nField, const char* szNullValue/*=""*/) const
 {
     if (fieldIsNull(nField))
     {
@@ -790,7 +790,7 @@ const char* CppSQLite3Table::getStringField(int nField, const char* szNullValue/
 }
 
 
-const char* CppSQLite3Table::getStringField(const char* szField, const char* szNullValue/*=""*/)
+const char* CppSQLite3Table::getStringField(const char* szField, const char* szNullValue/*=""*/) const
 {
     if (fieldIsNull(szField))
     {
@@ -803,21 +803,21 @@ const char* CppSQLite3Table::getStringField(const char* szField, const char* szN
 }
 
 
-bool CppSQLite3Table::fieldIsNull(int nField)
+bool CppSQLite3Table::fieldIsNull(int nField) const
 {
     checkResults();
     return (fieldValue(nField) == 0);
 }
 
 
-bool CppSQLite3Table::fieldIsNull(const char* szField)
+bool CppSQLite3Table::fieldIsNull(const char* szField) const
 {
     checkResults();
     return (fieldValue(szField) == 0);
 }
 
 
-const char* CppSQLite3Table::fieldName(int nCol)
+const char* CppSQLite3Table::fieldName(int nCol) const
 {
     checkResults();
 
@@ -847,7 +847,7 @@ void CppSQLite3Table::setRow(int nRow)
 }
 
 
-void CppSQLite3Table::checkResults()
+void CppSQLite3Table::checkResults() const
 {
     if (mpaszResults == 0)
     {
@@ -1079,7 +1079,7 @@ void CppSQLite3Statement::finalize()
 }
 
 
-void CppSQLite3Statement::checkDB()
+void CppSQLite3Statement::checkDB() const
 {
     if (mpDB == 0)
     {
@@ -1090,7 +1090,7 @@ void CppSQLite3Statement::checkDB()
 }
 
 
-void CppSQLite3Statement::checkVM()
+void CppSQLite3Statement::checkVM() const
 {
     if (mpVM == 0)
     {
@@ -1258,7 +1258,7 @@ CppSQLite3Table CppSQLite3DB::getTable(const char* szSQL)
 }
 
 
-sqlite_int64 CppSQLite3DB::lastRowId()
+sqlite_int64 CppSQLite3DB::lastRowId() const
 {
     return sqlite3_last_insert_rowid(mpDB);
 }
@@ -1271,7 +1271,7 @@ void CppSQLite3DB::setBusyTimeout(int nMillisecs)
 }
 
 
-void CppSQLite3DB::checkDB()
+void CppSQLite3DB::checkDB() const
 {
     if (!mpDB)
     {
