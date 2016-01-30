@@ -5,8 +5,8 @@
  * See LICENSE file for copyright and license info
 */
 
-#ifndef _CppSQLite3_H_
-#define _CppSQLite3_H_
+#ifndef CppSQLite3_H
+#define CppSQLite3_H
 
 #include <sqlite3.h>
 #include <cstdio>
@@ -71,9 +71,9 @@ public:
 
     virtual ~CppSQLite3Exception();
 
-    const int errorCode() { return mnErrCode; }
+    const int errorCode() const { return mnErrCode; }
 
-    const char* errorMessage() { return mpszErrMess; }
+    const char* errorMessage() const { return mpszErrMess; }
 
     static const char* errorCodeAsString(int nErrCode);
 
@@ -146,36 +146,36 @@ public:
 
     virtual ~CppSQLite3Query();
 
-    int numFields();
+    int numFields() const;
 
-    int fieldIndex(const char* szField);
-    const char* fieldName(int nCol);
+    int fieldIndex(const char* szField) const;
+    const char* fieldName(int nCol) const;
 
-    const char* fieldDeclType(int nCol);
-    int fieldDataType(int nCol);
+    const char* fieldDeclType(int nCol) const;
+    int fieldDataType(int nCol) const;
 
-    const char* fieldValue(int nField);
-    const char* fieldValue(const char* szField);
+    const char* fieldValue(int nField) const;
+    const char* fieldValue(const char* szField) const;
 
-    int getIntField(int nField, int nNullValue=0);
-    int getIntField(const char* szField, int nNullValue=0);
-    
-    long long getInt64Field(int nField, long long nNullValue=0);
-    long long getInt64Field(const char* szField, long long nNullValue=0);
+    int getIntField(int nField, int nNullValue=0) const;
+    int getIntField(const char* szField, int nNullValue=0) const;
 
-    double getFloatField(int nField, double fNullValue=0.0);
-    double getFloatField(const char* szField, double fNullValue=0.0);
+    long long getInt64Field(int nField, long long nNullValue=0) const;
+    long long getInt64Field(const char* szField, long long nNullValue=0) const;
 
-    const char* getStringField(int nField, const char* szNullValue="");
-    const char* getStringField(const char* szField, const char* szNullValue="");
+    double getFloatField(int nField, double fNullValue=0.0) const;
+    double getFloatField(const char* szField, double fNullValue=0.0) const;
 
-    const unsigned char* getBlobField(int nField, int& nLen);
-    const unsigned char* getBlobField(const char* szField, int& nLen);
+    const char* getStringField(int nField, const char* szNullValue="") const;
+    const char* getStringField(const char* szField, const char* szNullValue="") const;
 
-    bool fieldIsNull(int nField);
-    bool fieldIsNull(const char* szField);
+    const unsigned char* getBlobField(int nField, int& nLen) const;
+    const unsigned char* getBlobField(const char* szField, int& nLen) const;
 
-    bool eof();
+    bool fieldIsNull(int nField) const;
+    bool fieldIsNull(const char* szField) const;
+
+    bool eof() const;
 
     void nextRow();
 
@@ -183,7 +183,7 @@ public:
 
 private:
 
-    void checkVM();
+    void checkVM() const;
 
     sqlite3* mpDB;
     sqlite3_stmt* mpVM;
@@ -207,26 +207,26 @@ public:
 
     CppSQLite3Table& operator=(const CppSQLite3Table& rTable);
 
-    int numFields();
+    int numFields() const;
 
-    int numRows();
+    int numRows() const;
 
-    const char* fieldName(int nCol);
+    const char* fieldName(int nCol) const;
 
-    const char* fieldValue(int nField);
-    const char* fieldValue(const char* szField);
+    const char* fieldValue(int nField) const;
+    const char* fieldValue(const char* szField) const;
 
-    int getIntField(int nField, int nNullValue=0);
-    int getIntField(const char* szField, int nNullValue=0);
+    int getIntField(int nField, int nNullValue=0) const;
+    int getIntField(const char* szField, int nNullValue=0) const;
 
-    double getFloatField(int nField, double fNullValue=0.0);
-    double getFloatField(const char* szField, double fNullValue=0.0);
+    double getFloatField(int nField, double fNullValue=0.0) const;
+    double getFloatField(const char* szField, double fNullValue=0.0) const;
 
-    const char* getStringField(int nField, const char* szNullValue="");
-    const char* getStringField(const char* szField, const char* szNullValue="");
+    const char* getStringField(int nField, const char* szNullValue="") const;
+    const char* getStringField(const char* szField, const char* szNullValue="") const;
 
-    bool fieldIsNull(int nField);
-    bool fieldIsNull(const char* szField);
+    bool fieldIsNull(int nField) const;
+    bool fieldIsNull(const char* szField) const;
 
     void setRow(int nRow);
 
@@ -234,7 +234,7 @@ public:
 
 private:
 
-    void checkResults();
+    void checkResults() const;
 
     int mnCols;
     int mnRows;
@@ -274,8 +274,8 @@ public:
 
 private:
 
-    void checkDB();
-    void checkVM();
+    void checkDB() const;
+    void checkVM() const;
 
     sqlite3* mpDB;
     sqlite3_stmt* mpVM;
@@ -306,7 +306,7 @@ public:
 
     CppSQLite3Statement compileStatement(const char* szSQL);
 
-    sqlite_int64 lastRowId();
+    sqlite_int64 lastRowId() const;
 
     void interrupt() { sqlite3_interrupt(mpDB); }
 
@@ -321,7 +321,7 @@ private:
 
     sqlite3_stmt* compile(const char* szSQL);
 
-    void checkDB();
+    void checkDB() const;
 
     sqlite3* mpDB;
     int mnBusyTimeoutMs;
