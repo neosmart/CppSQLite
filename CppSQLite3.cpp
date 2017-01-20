@@ -7,11 +7,15 @@
 
 #include "CppSQLite3.h"
 #include <cstdlib>
+#include <utility>
 
 
 // Named constant for passing to CppSQLite3Exception when passing it a string
 // that cannot be deleted.
 static const bool DONT_DELETE_MSG=false;
+
+// Error message used when throwing CppSQLite3Exception when allocations fail.
+static const char* const ALLOCATION_ERROR_MESSAGE = "Cannot allocate memory";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Prototypes for SQLite functions not included in SQLite DLL, but copied below
@@ -21,6 +25,94 @@ int sqlite3_encode_binary(const unsigned char *in, int n, unsigned char *out);
 int sqlite3_decode_binary(const unsigned char *in, unsigned char *out);
 
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace detail
+{
+
+SQLite3Memory::SQLite3Memory() :
+    mnBufferLen(0),
+    mpBuf(nullptr)
+{
+}
+
+SQLite3Memory::SQLite3Memory(int nBufferLen) :
+    mnBufferLen(nBufferLen),
+    mpBuf(sqlite3_malloc(nBufferLen))
+{
+    if (!mpBuf && mnBufferLen>0)
+    {
+        throw CppSQLite3Exception(CPPSQLITE_ERROR,
+                                ALLOCATION_ERROR_MESSAGE,
+                                DONT_DELETE_MSG);
+    }
+}
+
+SQLite3Memory::SQLite3Memory(const char* szFormat, va_list list) :
+    mnBufferLen(0),
+    mpBuf(sqlite3_vmprintf(szFormat, list))
+{
+    if (!mpBuf)
+    {
+        throw CppSQLite3Exception(CPPSQLITE_ERROR,
+                                ALLOCATION_ERROR_MESSAGE,
+                                DONT_DELETE_MSG);
+    }
+    mnBufferLen = std::strlen(static_cast<char const*>(mpBuf))+1;
+}
+
+SQLite3Memory::~SQLite3Memory()
+{
+    clear();
+}
+
+SQLite3Memory::SQLite3Memory(SQLite3Memory const& other) :
+    mnBufferLen(other.mnBufferLen),
+    mpBuf(sqlite3_malloc(other.mnBufferLen))
+{
+    if (!mpBuf && mnBufferLen>0)
+    {
+        throw CppSQLite3Exception(CPPSQLITE_ERROR,
+                                ALLOCATION_ERROR_MESSAGE,
+                                DONT_DELETE_MSG);
+    }
+    std::memcpy(mpBuf, other.mpBuf, mnBufferLen);
+}
+
+SQLite3Memory& SQLite3Memory::operator=(SQLite3Memory const& lhs)
+{
+    SQLite3Memory tmp(lhs);
+    swap(tmp);
+    return *this;
+}
+
+SQLite3Memory::SQLite3Memory(SQLite3Memory&& other) :
+    mnBufferLen(other.mnBufferLen),
+    mpBuf(other.mpBuf)
+{
+    other.mnBufferLen = 0;
+    other.mpBuf = nullptr;
+}
+
+SQLite3Memory& SQLite3Memory::operator=(SQLite3Memory&& lhs)
+{
+    swap(lhs);
+    return *this;
+}
+
+void SQLite3Memory::swap(SQLite3Memory& other)
+{
+    std::swap(mnBufferLen, other.mnBufferLen);
+    std::swap(mpBuf, other.mpBuf);
+}
+
+void SQLite3Memory::clear()
+{
+    sqlite3_free(mpBuf);
+    mpBuf = nullptr;
+    mnBufferLen = 0;
+}
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -40,7 +132,7 @@ CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
     }
 }
 
-                                    
+
 CppSQLite3Exception::CppSQLite3Exception(const CppSQLite3Exception&  e) :
                                     mnErrCode(e.mnErrCode)
 {
@@ -102,26 +194,9 @@ CppSQLite3Exception::~CppSQLite3Exception()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-CppSQLite3Buffer::CppSQLite3Buffer()
-{
-    mpBuf = 0;
-}
-
-
-CppSQLite3Buffer::~CppSQLite3Buffer()
-{
-    clear();
-}
-
-
 void CppSQLite3Buffer::clear()
 {
-    if (mpBuf)
-    {
-        sqlite3_free(mpBuf);
-        mpBuf = 0;
-    }
-
+    mBuf.clear();
 }
 
 
@@ -129,10 +204,18 @@ const char* CppSQLite3Buffer::format(const char* szFormat, ...)
 {
     clear();
     va_list va;
-    va_start(va, szFormat);
-    mpBuf = sqlite3_vmprintf(szFormat, va);
-    va_end(va);
-    return mpBuf;
+    try
+    {
+        va_start(va, szFormat);
+        mBuf = detail::SQLite3Memory(szFormat, va);
+        va_end(va);
+        return static_cast<const char*>(mBuf.getBuffer());
+    }
+    catch(CppSQLite3Exception&)
+    {
+        va_end(va);
+        throw;
+    }
 }
 
 
@@ -173,7 +256,7 @@ void CppSQLite3Binary::setEncoded(const unsigned char* pBuf)
     if (!mpBuf)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
 
@@ -240,7 +323,7 @@ unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
     if (!mpBuf)
     {
         throw CppSQLite3Exception(CPPSQLITE_ERROR,
-                                "Cannot allocate memory",
+                                ALLOCATION_ERROR_MESSAGE,
                                 DONT_DELETE_MSG);
     }
 
@@ -995,7 +1078,7 @@ void CppSQLite3Statement::bind(int nParam, const long long nValue)
 {
     checkVM();
     int nRes = sqlite3_bind_int64(mpVM, nParam, nValue);
-    
+
     if (nRes != SQLITE_OK)
     {
         throw CppSQLite3Exception(nRes,
@@ -1033,7 +1116,7 @@ void CppSQLite3Statement::bind(int nParam, const unsigned char* blobValue, int n
     }
 }
 
-    
+
 void CppSQLite3Statement::bindNull(int nParam)
 {
     checkVM();
@@ -1303,7 +1386,7 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
 
 ////////////////////////////////////////////////////////////////////////////////
 // SQLite encode.c reproduced here, containing implementation notes and source
-// for sqlite3_encode_binary() and sqlite3_decode_binary() 
+// for sqlite3_encode_binary() and sqlite3_decode_binary()
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -1350,7 +1433,7 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
 ** We would prefer to keep the size of the encoded string smaller than
 ** this.
 **
-** To minimize the encoding size, we first add a fixed offset value to each 
+** To minimize the encoding size, we first add a fixed offset value to each
 ** byte in the sequence.  The addition is modulo 256.  (That is to say, if
 ** the sum of the original character value and the offset exceeds 256, then
 ** the higher order bits are truncated.)  The offset is chosen to minimize
@@ -1359,7 +1442,7 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
 ** characters, the offset might be 0x01.  Each of the 0x27 characters would
 ** then be converted into an 0x28 character which would not need to be
 ** escaped at all and so the 100 character input string would be converted
-** into just 100 characters of output.  Actually 101 characters of output - 
+** into just 100 characters of output.  Actually 101 characters of output -
 ** we have to record the offset used as the first byte in the sequence so
 ** that the string can be decoded.  Since the offset value is stored as
 ** part of the output string and the output string is not allowed to contain
@@ -1382,7 +1465,7 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
 **
 ** Decoding is obvious:
 **
-**     (5)   Copy encoded characters except the first into the decode 
+**     (5)   Copy encoded characters except the first into the decode
 **           buffer.  Set the first encoded character aside for use as
 **           the offset in step 7 below.
 **
@@ -1408,7 +1491,7 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
 
 /*
 ** Encode a binary buffer "in" of size n bytes so that it contains
-** no instances of characters '\'' or '\000'.  The output is 
+** no instances of characters '\'' or '\000'.  The output is
 ** null-terminated and can be used as a string value in an INSERT
 ** or UPDATE statement.  Use sqlite3_decode_binary() to convert the
 ** string back into its original binary.
