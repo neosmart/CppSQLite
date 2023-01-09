@@ -12,7 +12,11 @@
 #include <cstdio>
 #include <cstring>
 
+#include <stdexcept>
+
 #define CPPSQLITE_ERROR 1000
+
+using CppSQLite3ErrorHandler = void (*)(int, const char*, const char*);
 
 namespace detail
 {
@@ -58,6 +62,9 @@ namespace detail
     };
 }
 
+class SQLite3MemoryException : public std::exception {
+
+};
 
 class CppSQLite3Exception
 {
@@ -139,6 +146,7 @@ public:
 
     CppSQLite3Query(sqlite3* pDB,
                 sqlite3_stmt* pVM,
+                CppSQLite3ErrorHandler handler,
                 bool bEof,
                 bool bOwnVM=true);
 
@@ -190,6 +198,7 @@ private:
     bool mbEof;
     int mnCols;
     bool mbOwnVM;
+    CppSQLite3ErrorHandler mfErrorHandler;
 };
 
 
@@ -251,7 +260,7 @@ public:
 
     CppSQLite3Statement(const CppSQLite3Statement& rStatement);
 
-    CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM);
+    CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler);
 
     virtual ~CppSQLite3Statement();
 
@@ -276,9 +285,11 @@ private:
 
     void checkDB() const;
     void checkVM() const;
+    void checkReturnCode(int returnCode, const char* context);
 
     sqlite3* mpDB;
     sqlite3_stmt* mpVM;
+    CppSQLite3ErrorHandler mfErrorHandler;
 };
 
 
@@ -312,6 +323,10 @@ public:
 
     void setBusyTimeout(int nMillisecs);
 
+    void setErrorHandler(CppSQLite3ErrorHandler h) {
+        mfErrorHandler = h;
+    }
+
     static const char* SQLiteVersion() { return SQLITE_VERSION; }
 
 private:
@@ -325,6 +340,7 @@ private:
 
     sqlite3* mpDB;
     int mnBusyTimeoutMs;
+    CppSQLite3ErrorHandler mfErrorHandler;
 };
 
 #endif
