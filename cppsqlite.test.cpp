@@ -1,6 +1,8 @@
 #include "CppSQLite3.h"
 #include "testhelper.h"
 
+#include <type_traits>
+
 #include <gtest/gtest.h>
 
 TEST(ExecQueryTest, throwsOnSyntaxError) {
@@ -86,6 +88,16 @@ TEST(CppSQLite3TableTest, getFieldValue ) {
     ASSERT_STREQ("some text", t.fieldValue("INFO"));
 }
 
+TEST(CppSQLite3TableTest, moveOperatorTransfersResultsHandle ) {
+    CppSQLite3DB db;
+    db.open(":memory:");
+    auto table = db.getTable("CREATE TABLE `myTable` (`INFO` TEXT);");
+    ASSERT_EQ(0, table.numRows());
+    auto table2 = std::move(table);
+    EXPECT_THROW_WITH_MSG(table.numRows(), std::logic_error, "Null Results pointer" );
+    ASSERT_EQ(0, table2.numRows());
+}
+
 TEST(CppSQLite3TableTest, invalidFieldName ) {
     CppSQLite3DB db;
     db.open(":memory:");
@@ -94,13 +106,41 @@ TEST(CppSQLite3TableTest, invalidFieldName ) {
     EXPECT_THROW_WITH_MSG( t.fieldValue("xyz"), std::invalid_argument,  "Invalid field name requested: 'xyz'" );
 }
 
-TEST(CppSQLite3QueryTest, copyOperatorTransfersVMHandle ) {
+TEST(CppSQLite3QueryTest, moveOperatorTransfersVMHandle ) {
     CppSQLite3DB db;
     db.open(":memory:");
     db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);");
-    const CppSQLite3Query query = db.execQuery("SELECT * FROM myTable");
+    CppSQLite3Query query = db.execQuery("SELECT * FROM myTable");
     ASSERT_TRUE(query.eof());
-    auto query2 = query;
+    auto query2 = std::move(query);
     EXPECT_THROW_WITH_MSG(query.eof(), std::logic_error, "Null Virtual Machine pointer" );
     ASSERT_TRUE(query2.eof());
 }
+
+TEST(CppSQLite3StatementTest, moveOperatorTransfersVMHandle ) {
+    CppSQLite3DB db;
+    db.open(":memory:");
+    db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);");
+    CppSQLite3Statement stmt = db.compileStatement("SELECT * FROM myTable");
+    ASSERT_NO_THROW(stmt.execQuery());
+    auto stmt2 = std::move(stmt);
+    EXPECT_THROW_WITH_MSG(stmt.execQuery(), std::logic_error, "Null Virtual Machine pointer" );
+    ASSERT_NO_THROW(stmt2.execQuery());
+}
+
+static_assert(std::is_move_constructible_v<CppSQLite3Query>, "move constructible");
+static_assert(std::is_move_assignable_v<CppSQLite3Query>, "move assignable");
+static_assert(!std::is_copy_constructible_v<CppSQLite3Query>, "not copy constructible");
+static_assert(!std::is_copy_assignable_v<CppSQLite3Query>, "not copy assignable");
+
+static_assert(std::is_move_constructible_v<CppSQLite3Statement>, "move constructible");
+static_assert(std::is_move_assignable_v<CppSQLite3Statement>, "move assignable");
+static_assert(!std::is_copy_constructible_v<CppSQLite3Statement>, "not copy constructible");
+static_assert(!std::is_copy_assignable_v<CppSQLite3Statement>, "not copy assignable");
+
+static_assert(std::is_move_constructible_v<CppSQLite3Table>, "move constructible");
+static_assert(std::is_move_assignable_v<CppSQLite3Table>, "move assignable");
+static_assert(!std::is_copy_constructible_v<CppSQLite3Table>, "not copy constructible");
+static_assert(!std::is_copy_assignable_v<CppSQLite3Table>, "not copy assignable");
+
+

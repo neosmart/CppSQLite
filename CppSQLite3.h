@@ -142,7 +142,7 @@ public:
 
     CppSQLite3Query();
 
-    CppSQLite3Query(const CppSQLite3Query& rQuery);
+    CppSQLite3Query(CppSQLite3Query&& rQuery);
 
     CppSQLite3Query(sqlite3* pDB,
                 sqlite3_stmt* pVM,
@@ -150,7 +150,7 @@ public:
                 bool bEof,
                 bool bOwnVM=true);
 
-    CppSQLite3Query& operator=(const CppSQLite3Query& rQuery);
+    CppSQLite3Query& operator=(CppSQLite3Query &&rQuery);
 
     virtual ~CppSQLite3Query();
 
@@ -208,13 +208,13 @@ public:
 
     CppSQLite3Table();
 
-    CppSQLite3Table(const CppSQLite3Table& rTable);
+    CppSQLite3Table(CppSQLite3Table &&rTable);
 
     CppSQLite3Table(char** paszResults, int nRows, int nCols);
 
     virtual ~CppSQLite3Table();
 
-    CppSQLite3Table& operator=(const CppSQLite3Table& rTable);
+    CppSQLite3Table& operator=(CppSQLite3Table &&rTable);
 
     int numFields() const;
 
@@ -258,13 +258,13 @@ public:
 
     CppSQLite3Statement();
 
-    CppSQLite3Statement(const CppSQLite3Statement& rStatement);
+    CppSQLite3Statement(CppSQLite3Statement &&rStatement);
 
     CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler);
 
     virtual ~CppSQLite3Statement();
 
-    CppSQLite3Statement& operator=(const CppSQLite3Statement& rStatement);
+    CppSQLite3Statement& operator=(CppSQLite3Statement&& rStatement);
 
     int execDML();
 
