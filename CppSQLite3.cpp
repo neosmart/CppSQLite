@@ -354,11 +354,11 @@ CppSQLite3Query::CppSQLite3Query()
 }
 
 
-CppSQLite3Query::CppSQLite3Query(const CppSQLite3Query& rQuery)
+CppSQLite3Query::CppSQLite3Query(CppSQLite3Query &&rQuery)
 {
     mpVM = rQuery.mpVM;
     // Only one object can own the VM
-    const_cast<CppSQLite3Query&>(rQuery).mpVM = 0;
+    rQuery.mpVM = 0;
     mbEof = rQuery.mbEof;
     mnCols = rQuery.mnCols;
     mbOwnVM = rQuery.mbOwnVM;
@@ -392,7 +392,7 @@ CppSQLite3Query::~CppSQLite3Query()
 }
 
 
-CppSQLite3Query& CppSQLite3Query::operator=(const CppSQLite3Query& rQuery)
+CppSQLite3Query& CppSQLite3Query::operator=(CppSQLite3Query&& rQuery)
 {
     try
     {
@@ -402,9 +402,7 @@ CppSQLite3Query& CppSQLite3Query::operator=(const CppSQLite3Query& rQuery)
     {
     }
     mpVM = rQuery.mpVM;
-    // Only one object can own the VM
-    // todo: probably UB - make it move assign operator?
-    const_cast<CppSQLite3Query&>(rQuery).mpVM = 0;
+    rQuery.mpVM = 0;
     mbEof = rQuery.mbEof;
     mnCols = rQuery.mnCols;
     mbOwnVM = rQuery.mbOwnVM;
@@ -687,11 +685,11 @@ CppSQLite3Table::CppSQLite3Table()
 }
 
 
-CppSQLite3Table::CppSQLite3Table(const CppSQLite3Table& rTable)
+CppSQLite3Table::CppSQLite3Table(CppSQLite3Table&& rTable)
 {
     mpaszResults = rTable.mpaszResults;
     // Only one object can own the results
-    const_cast<CppSQLite3Table&>(rTable).mpaszResults = 0;
+    rTable.mpaszResults = 0;
     mnRows = rTable.mnRows;
     mnCols = rTable.mnCols;
     mnCurrentRow = rTable.mnCurrentRow;
@@ -719,7 +717,7 @@ CppSQLite3Table::~CppSQLite3Table()
 }
 
 
-CppSQLite3Table& CppSQLite3Table::operator=(const CppSQLite3Table& rTable)
+CppSQLite3Table& CppSQLite3Table::operator=(CppSQLite3Table&& rTable)
 {
     try
     {
@@ -730,7 +728,7 @@ CppSQLite3Table& CppSQLite3Table::operator=(const CppSQLite3Table& rTable)
     }
     mpaszResults = rTable.mpaszResults;
     // Only one object can own the results
-    const_cast<CppSQLite3Table&>(rTable).mpaszResults = 0;
+    rTable.mpaszResults = 0;
     mnRows = rTable.mnRows;
     mnCols = rTable.mnCols;
     mnCurrentRow = rTable.mnCurrentRow;
@@ -934,12 +932,12 @@ CppSQLite3Statement::CppSQLite3Statement()
 }
 
 
-CppSQLite3Statement::CppSQLite3Statement(const CppSQLite3Statement& rStatement)
+CppSQLite3Statement::CppSQLite3Statement(CppSQLite3Statement &&rStatement)
 {
     mpDB = rStatement.mpDB;
     mpVM = rStatement.mpVM;
     // Only one object can own VM
-    const_cast<CppSQLite3Statement&>(rStatement).mpVM = 0;
+    rStatement.mpVM = 0;
     mfErrorHandler = rStatement.mfErrorHandler;
 }
 
@@ -964,12 +962,12 @@ CppSQLite3Statement::~CppSQLite3Statement()
 }
 
 
-CppSQLite3Statement& CppSQLite3Statement::operator=(const CppSQLite3Statement& rStatement)
+CppSQLite3Statement& CppSQLite3Statement::operator=(CppSQLite3Statement &&rStatement)
 {
     mpDB = rStatement.mpDB;
     mpVM = rStatement.mpVM;
     // Only one object can own VM
-    const_cast<CppSQLite3Statement&>(rStatement).mpVM = 0;
+    rStatement.mpVM = 0;
     mfErrorHandler = rStatement.mfErrorHandler;
     return *this;
 }
