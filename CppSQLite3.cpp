@@ -13,13 +13,6 @@
 
 namespace {
 
-// Named constant for passing to CppSQLite3Exception when passing it a string
-// that cannot be deleted.
-static const bool DONT_DELETE_MSG=false;
-
-// Error message used when throwing CppSQLite3Exception when allocations fail.
-static const char* const ALLOCATION_ERROR_MESSAGE = "Cannot allocate memory";
-
 ////////////////////////////////////////////////////////////////////////////////
 // Prototypes for SQLite functions not included in SQLite DLL, but copied below
 // from SQLite encode.c
@@ -30,7 +23,7 @@ int sqlite3_decode_binary(const unsigned char *in, unsigned char *out);
 ////////////////////////////////////////////////////////////////////////////////
 
 void throwCppSQLite3Exception(int errorCode, const char* msg, const char* /* context*/) {
-    throw CppSQLite3Exception(errorCode, msg, DONT_DELETE_MSG);
+    throw CppSQLite3Exception(errorCode, msg);
 }
 
 
@@ -120,8 +113,7 @@ void SQLite3Memory::clear()
 ////////////////////////////////////////////////////////////////////////////////
 
 CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
-                                    const char* szErrMess,
-                                    bool bDeleteMsg/*=true*/) :
+                                    const char* szErrMess) :
                                     mnErrCode(nErrCode)
 {
     mpszErrMess = sqlite3_mprintf("%s[%d]: %s",
@@ -129,10 +121,6 @@ CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
                                 nErrCode,
                                 szErrMess ? szErrMess : "");
 
-    if (bDeleteMsg && szErrMess)
-    {
-        sqlite3_free((void*)szErrMess);
-    }
 }
 
 
