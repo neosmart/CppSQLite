@@ -2,18 +2,6 @@
 #include "CppSQLite3.h"
 #include <gtest/gtest.h>
 
-#define EXPECT_THROW_CPPSQLITE( statement, message )                                                \
-    try {                                                                                                              \
-        { statement; }                                                                                             \
-        FAIL() << "Expected: " #statement                                                                                \
-        " throws an exception of type CppSQLite3Exception.\n Actual:  it throws nothing.";                       \
-    } catch( CppSQLite3Exception const& e ) {                                                                               \
-        EXPECT_STREQ( message, e.errorMessage() );                                                                             \
-    } catch( ... ) {                                                                                                   \
-    FAIL() << "Expected: " << #statement <<                                                                               \
-    " throws an exception of type CppSQLite3Exception.\n Actual:  it throws a different exception.";             \
-    }
-
 #define EXPECT_THROW_WITH_MSG( statement, expected_exception, message )                                                \
     try {                                                                                                              \
         { statement; }                                                                                             \
@@ -45,7 +33,7 @@ void throwException(int code, const char* msg, const char* context) {
     if(strlen(context) > 0) {
         finalMsg += std::string(" ") + context;
     }
-    if(code != 1) {
+    if(code != SQLITE_ERROR) {
         finalMsg += " (Code " + std::to_string(code) + ")";
     }
 
