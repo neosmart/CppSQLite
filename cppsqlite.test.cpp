@@ -9,7 +9,7 @@ TEST(ExecQueryTest, throwsOnSyntaxError) {
     CppSQLite3DB db;
     db.open(":memory:");
     db.execQuery( "CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);" );
-    EXPECT_THROW_CPPSQLITE( db.execQuery("SELCT * FROM myTable"), "SQLITE_ERROR[1]: near \"SELCT\": syntax error" );
+    EXPECT_THROW_WITH_MSG( db.execQuery("SELCT * FROM myTable"), CppSQLite3InvalidQuery, "near \"SELCT\": syntax error" );
 }
 
 
@@ -37,9 +37,8 @@ TEST( ExecQueryTest, selectOneRow) {
 
 TEST(ErrorHandlerTest, dbThrowsOnInvalidOpenPath ) {
     CppSQLite3DB db;
-    db.setErrorHandler(CustomExceptions::throwException);
-    EXPECT_THROW_WITH_MSG(db.open("nonExistentFolder/test.sql"), CustomExceptions::SQLiteError,
-                          "unable to open database file when opening nonExistentFolder/test.sql (Code 14)");
+    EXPECT_THROW_WITH_MSG(db.open("nonExistentFolder/test.sql"), CppSQLite3Exception,
+                          "SQLITE_CANTOPEN[14]: unable to open database file");
 }
 
 TEST(ErrorHandlerTest, dbExecQueryThrowsCustomExceptionOnSyntaxError) {
@@ -128,19 +127,19 @@ TEST(CppSQLite3StatementTest, moveOperatorTransfersVMHandle ) {
     ASSERT_NO_THROW(stmt2.execQuery());
 }
 
-static_assert(std::is_move_constructible_v<CppSQLite3Query>, "move constructible");
-static_assert(std::is_move_assignable_v<CppSQLite3Query>, "move assignable");
-static_assert(!std::is_copy_constructible_v<CppSQLite3Query>, "not copy constructible");
-static_assert(!std::is_copy_assignable_v<CppSQLite3Query>, "not copy assignable");
+static_assert(std::is_move_constructible<CppSQLite3Query>::value, "move constructible");
+static_assert(std::is_move_assignable<CppSQLite3Query>::value, "move assignable");
+static_assert(!std::is_copy_constructible<CppSQLite3Query>::value, "not copy constructible");
+static_assert(!std::is_copy_assignable<CppSQLite3Query>::value, "not copy assignable");
 
-static_assert(std::is_move_constructible_v<CppSQLite3Statement>, "move constructible");
-static_assert(std::is_move_assignable_v<CppSQLite3Statement>, "move assignable");
-static_assert(!std::is_copy_constructible_v<CppSQLite3Statement>, "not copy constructible");
-static_assert(!std::is_copy_assignable_v<CppSQLite3Statement>, "not copy assignable");
+static_assert(std::is_move_constructible<CppSQLite3Statement>::value, "move constructible");
+static_assert(std::is_move_assignable<CppSQLite3Statement>::value, "move assignable");
+static_assert(!std::is_copy_constructible<CppSQLite3Statement>::value, "not copy constructible");
+static_assert(!std::is_copy_assignable<CppSQLite3Statement>::value, "not copy assignable");
 
-static_assert(std::is_move_constructible_v<CppSQLite3Table>, "move constructible");
-static_assert(std::is_move_assignable_v<CppSQLite3Table>, "move assignable");
-static_assert(!std::is_copy_constructible_v<CppSQLite3Table>, "not copy constructible");
-static_assert(!std::is_copy_assignable_v<CppSQLite3Table>, "not copy assignable");
+static_assert(std::is_move_constructible<CppSQLite3Table>::value, "move constructible");
+static_assert(std::is_move_assignable<CppSQLite3Table>::value, "move assignable");
+static_assert(!std::is_copy_constructible<CppSQLite3Table>::value, "not copy constructible");
+static_assert(!std::is_copy_assignable<CppSQLite3Table>::value, "not copy assignable");
 
 

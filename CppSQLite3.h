@@ -62,31 +62,31 @@ namespace detail
     };
 }
 
-class SQLite3MemoryException : public std::exception {
+class CppSQLite3MemoryException : public std::exception {
 
 };
 
-class CppSQLite3Exception
+class CppSQLite3InvalidQuery : public std::logic_error {
+public:
+    CppSQLite3InvalidQuery(const char* szErrMess) : std::logic_error(szErrMess) {
+
+    }
+};
+
+class CppSQLite3Exception : public std::runtime_error
 {
 public:
 
     CppSQLite3Exception(const int nErrCode,
                     const char* szErrMess);
 
-    CppSQLite3Exception(const CppSQLite3Exception&  e);
-
-    virtual ~CppSQLite3Exception();
-
     const int errorCode() const { return mnErrCode; }
-
-    const char* errorMessage() const { return mpszErrMess; }
 
     static const char* errorCodeAsString(int nErrCode);
 
 private:
 
     int mnErrCode;
-    char* mpszErrMess;
 };
 
 
@@ -303,6 +303,8 @@ public:
     void open(const char* szFile);
 
     void close();
+
+    bool isOpened() const;
 
     bool tableExists(const char* szTable);
 

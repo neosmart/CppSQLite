@@ -8,7 +8,6 @@
 #include "CppSQLite3.h"
 #include <cstdlib>
 #include <utility>
-#include <stdexcept>
 #include <string>
 
 namespace {
@@ -22,8 +21,18 @@ int sqlite3_decode_binary(const unsigned char *in, unsigned char *out);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void throwCppSQLite3Exception(int errorCode, const char* msg, const char* /* context*/) {
-    throw CppSQLite3Exception(errorCode, msg);
+void defaultErrorHandler(int nErrorCode, const char* szErrMsg, const char* /* context*/) {
+    CppSQLite3Buffer buffer;
+    if(nErrorCode == SQLITE_ERROR) {
+        throw CppSQLite3InvalidQuery(szErrMsg);
+    }
+
+    buffer.format("%s[%d]: %s",
+                  CppSQLite3Exception::errorCodeAsString(nErrorCode),
+                  nErrorCode,
+                  szErrMsg ? szErrMsg : "");
+
+    throw CppSQLite3Exception(nErrorCode, buffer);
 }
 
 
@@ -43,7 +52,7 @@ SQLite3Memory::SQLite3Memory(int nBufferLen) :
 {
     if (!mpBuf && mnBufferLen>0)
     {
-        throw SQLite3MemoryException();
+        throw CppSQLite3MemoryException();
     }
 }
 
@@ -53,9 +62,9 @@ SQLite3Memory::SQLite3Memory(const char* szFormat, va_list list) :
 {
     if (!mpBuf)
     {
-        throw SQLite3MemoryException();
+        throw CppSQLite3MemoryException();
     }
-    mnBufferLen = std::strlen(static_cast<char const*>(mpBuf))+1;
+    mnBufferLen = static_cast<int>(std::strlen(static_cast<char const*>(mpBuf))+1);
 }
 
 SQLite3Memory::~SQLite3Memory()
@@ -69,7 +78,7 @@ SQLite3Memory::SQLite3Memory(SQLite3Memory const& other) :
 {
     if (!mpBuf && mnBufferLen>0)
     {
-        throw SQLite3MemoryException();
+        throw CppSQLite3MemoryException();
     }
     std::memcpy(mpBuf, other.mpBuf, mnBufferLen);
 }
@@ -114,24 +123,10 @@ void SQLite3Memory::clear()
 
 CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
                                     const char* szErrMess) :
+    std::runtime_error(szErrMess),
                                     mnErrCode(nErrCode)
 {
-    mpszErrMess = sqlite3_mprintf("%s[%d]: %s",
-                                errorCodeAsString(nErrCode),
-                                nErrCode,
-                                szErrMess ? szErrMess : "");
 
-}
-
-
-CppSQLite3Exception::CppSQLite3Exception(const CppSQLite3Exception&  e) :
-                                    mnErrCode(e.mnErrCode)
-{
-    mpszErrMess = 0;
-    if (e.mpszErrMess)
-    {
-        mpszErrMess = sqlite3_mprintf("%s", e.mpszErrMess);
-    }
 }
 
 
@@ -172,17 +167,6 @@ const char* CppSQLite3Exception::errorCodeAsString(int nErrCode)
     }
 }
 
-
-CppSQLite3Exception::~CppSQLite3Exception()
-{
-    if (mpszErrMess)
-    {
-        sqlite3_free(mpszErrMess);
-        mpszErrMess = 0;
-    }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 void CppSQLite3Buffer::clear()
@@ -202,7 +186,7 @@ const char* CppSQLite3Buffer::format(const char* szFormat, ...)
         va_end(va);
         return static_cast<const char*>(mBuf.getBuffer());
     }
-    catch(SQLite3MemoryException&)
+    catch(CppSQLite3MemoryException&)
     {
         va_end(va);
         throw;
@@ -239,14 +223,14 @@ void CppSQLite3Binary::setEncoded(const unsigned char* pBuf)
 {
     clear();
 
-    mnEncodedLen = strlen((const char*)pBuf);
+    mnEncodedLen = static_cast<int>(strlen((const char*)pBuf));
     mnBufferLen = mnEncodedLen + 1; // Allow for NULL terminator
 
     mpBuf = (unsigned char*)malloc(mnBufferLen);
 
     if (!mpBuf)
     {
-        throw SQLite3MemoryException();
+        throw CppSQLite3MemoryException();
     }
 
     memcpy(mpBuf, pBuf, mnBufferLen);
@@ -309,7 +293,7 @@ unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
 
     if (!mpBuf)
     {
-        throw SQLite3MemoryException();
+        throw CppSQLite3MemoryException();
     }
 
     mbEncoded = false;
@@ -338,7 +322,7 @@ CppSQLite3Query::CppSQLite3Query()
     mbEof = true;
     mnCols = 0;
     mbOwnVM = false;
-    mfErrorHandler = throwCppSQLite3Exception;
+    mfErrorHandler = defaultErrorHandler;
 }
 
 
@@ -916,7 +900,7 @@ CppSQLite3Statement::CppSQLite3Statement()
 {
     mpDB = 0;
     mpVM = 0;
-    mfErrorHandler = throwCppSQLite3Exception;
+    mfErrorHandler = defaultErrorHandler;
 }
 
 
@@ -1123,9 +1107,9 @@ void CppSQLite3Statement::checkReturnCode(int nRes, const char* context)
 
 CppSQLite3DB::CppSQLite3DB()
 {
-    mpDB = 0;
+    mpDB = nullptr;
     mnBusyTimeoutMs = 60000; // 60 seconds
-    mfErrorHandler = throwCppSQLite3Exception;
+    mfErrorHandler = defaultErrorHandler;
 }
 
 
@@ -1171,8 +1155,13 @@ void CppSQLite3DB::close()
     if (mpDB)
     {
         sqlite3_close(mpDB);
-        mpDB = 0;
+        mpDB = nullptr;
     }
+}
+
+bool CppSQLite3DB::isOpened() const
+{
+    return mpDB != nullptr;
 }
 
 

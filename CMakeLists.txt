@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(CppSQLite)
+project(CppSQLite3)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -14,9 +14,13 @@ add_library(${CMAKE_PROJECT_NAME}
     CppSQLite3.cpp
     CppSQLite3.h)
 
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "cppsqlite3$<$<CONFIG:Debug>:d>")
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PUBLIC SQLite::SQLite3
 )
+
+option(BUILD_SHARED_LIBS "Build shared library" OFF)
 
 enable_testing()
 add_executable(cppSqliteTest

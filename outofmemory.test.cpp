@@ -41,7 +41,7 @@ void *mockRealloc(void *p, int n) {
     return newLocation;
 }
 
-int mockMemSize(void *p)             { return mockAllocator.allocations.at(p);}
+int mockMemSize(void *p)             { return static_cast<int>(mockAllocator.allocations.at(p));}
 int mockMemRoundup(int n)            {return n;}
 
 
@@ -83,7 +83,7 @@ TEST_F(OutOfMemoryTest, BufferThrowsMemoryError) {
     CppSQLite3Buffer buffer;
     std::string someString(20, '*');
     mockAllocator.provideMemory = false;
-    ASSERT_THROW(buffer.format(someString.c_str()), SQLite3MemoryException);
+    ASSERT_THROW(buffer.format(someString.c_str()), CppSQLite3MemoryException);
 }
 
 TEST_F(OutOfMemoryTest, dbTableExistsThrowsMemoryError) {
@@ -91,7 +91,7 @@ TEST_F(OutOfMemoryTest, dbTableExistsThrowsMemoryError) {
     db.open(":memory:");
     db.setErrorHandler(CustomExceptions::throwException);
     mockAllocator.provideMemory = false;
-    ASSERT_THROW(db.tableExists("xyz"), SQLite3MemoryException);
+    ASSERT_THROW(db.tableExists("xyz"), CppSQLite3MemoryException);
 }
 
 TEST_F(OutOfMemoryTest, QueryObjectCallsCustomErrorHandler) {
