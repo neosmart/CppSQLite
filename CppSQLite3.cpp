@@ -202,20 +202,21 @@ void CppSQLite3Buffer::clear()
 
 const char* CppSQLite3Buffer::format(const char* szFormat, ...)
 {
-    clear();
     va_list va;
+    detail::SQLite3Memory tmpBuf; 
     try
     {
         va_start(va, szFormat);
-        mBuf = detail::SQLite3Memory(szFormat, va);
+        tmpBuf = detail::SQLite3Memory(szFormat, va);
         va_end(va);
-        return static_cast<const char*>(mBuf.getBuffer());
     }
     catch(CppSQLite3Exception&)
     {
         va_end(va);
         throw;
     }
+    mBuf = tmpBuf;
+    return static_cast<const char*>(mBuf.getBuffer());
 }
 
 
