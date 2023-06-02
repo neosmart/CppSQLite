@@ -215,7 +215,7 @@ const char* CppSQLite3Buffer::format(const char* szFormat, ...)
         va_end(va);
         throw;
     }
-    mBuf = tmpBuf;
+    mBuf = std::move(tmpBuf);
     return static_cast<const char*>(mBuf.getBuffer());
 }
 
