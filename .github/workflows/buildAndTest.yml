@@ -1,14 +1,17 @@
 name: Build And Test
 
-on: [push]
+on:
+  push:
+    branches:
+      - '**'
+  release:
+    types: [created]
 
 jobs:
   build:
-  
     strategy:
       matrix:
         os: [ubuntu-latest, windows-2019]
-        #os: [windows-2019]
         BUILD_TYPE: [RelWithDebInfo, Debug]
         include: 
           - CONAN_BUILD_TYPE: Debug
@@ -41,7 +44,6 @@ jobs:
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBUILD_SHARED_LIBS=True
-        #run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
 
       - name: Build
         # Build your program with the given configuration
@@ -52,3 +54,41 @@ jobs:
         # Execute tests defined by the CMake configuration.
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: ctest -C ${{matrix.BUILD_TYPE}} --output-on-failure
+
+      - name: CPack
+        if: ${{ github.event_name == 'release' }}
+        working-directory: ${{github.workspace}}/build
+        run: cpack -C ${{matrix.BUILD_TYPE}} -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF
+
+      - name: Stash artifact
+        # we can't attach the artifact directly to the release because 
+        # skx/github-action-publish-binaries doesn't run on windows runners
+        # at the time of writing this
+        if: ${{ github.event_name == 'release' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: cppsqlite3-${{matrix.BUILD_TYPE}}-${{matrix.os}}-${{github.run_id}}
+          path: build/CppSQLite3-*.zip
+          retention-days: 3
+  
+  deploy:
+    name: Upload the artifacts
+    needs: build
+    if: ${{ github.event_name == 'release' }}      
+    strategy:
+      matrix:
+        artifact_os: [ubuntu-latest, windows-2019]
+        artifact_build_type: [RelWithDebInfo, Debug]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unstash artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: cppsqlite3-${{matrix.artifact_build_type}}-${{matrix.artifact_os}}-${{github.run_id}}
+          
+      - name: Deploy artifact
+        uses: skx/github-action-publish-binaries@release-2.0
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          args: 'CppSQLite3-*.zip'
