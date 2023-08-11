@@ -9,7 +9,7 @@ TEST(ExecQueryTest, throwsOnSyntaxError) {
     CppSQLite3DB db;
     db.open(":memory:");
     db.execQuery( "CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);" );
-    EXPECT_THROW_WITH_MSG( db.execQuery("SELCT * FROM myTable"), CppSQLite3InvalidQuery, "near \"SELCT\": syntax error" );
+    EXPECT_THROW_WITH_MSG( db.execQuery("SELCT * FROM myTable"), CppSQLite3Exception, "SQLITE_ERROR[1]: near \"SELCT\": syntax error" );
 }
 
 
@@ -33,6 +33,29 @@ TEST( ExecQueryTest, selectOneRow) {
     EXPECT_STREQ("some text", result.getStringField("INFO"));
     result.nextRow();
     EXPECT_TRUE(result.eof());
+}
+
+TEST(DbTest, openNonExistentFileInReadOnly_ShouldThrow) {
+    CppSQLite3DB db;
+    EXPECT_THROW_WITH_MSG(db.open("nowhere.sqlite", SQLITE_OPEN_READONLY),
+                          CppSQLite3Exception,
+                          "SQLITE_CANTOPEN[14]: unable to open database file");
+}
+
+TEST(DbTest, writingToReadOnlyDatabaseShouldFail) {
+    CppSQLite3DB db;
+    db.open(":memory:", SQLITE_OPEN_READONLY);
+    EXPECT_THROW_WITH_MSG(db.execDML("CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);"),
+                                     CppSQLite3Exception,
+                                     "SQLITE_READONLY[8]: attempt to write a readonly database");
+}
+
+TEST(DbTest, tableExists) {
+    CppSQLite3DB db;
+    db.open(":memory:");
+    ASSERT_FALSE(db.tableExists("myTable"));
+    db.execDML("CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);");
+    ASSERT_TRUE(db.tableExists("myTable"));
 }
 
 TEST(ErrorHandlerTest, dbThrowsOnInvalidOpenPath ) {

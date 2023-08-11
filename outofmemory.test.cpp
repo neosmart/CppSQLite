@@ -78,20 +78,12 @@ class CustomError : public std::exception {};
 
 }
 
-
-TEST_F(OutOfMemoryTest, BufferThrowsMemoryError) {
-    CppSQLite3Buffer buffer;
-    std::string someString(20, '*');
-    mockAllocator.provideMemory = false;
-    ASSERT_THROW(buffer.format(someString.c_str()), CppSQLite3MemoryException);
-}
-
 TEST_F(OutOfMemoryTest, dbTableExistsThrowsMemoryError) {
     CppSQLite3DB db;
     db.open(":memory:");
     db.setErrorHandler(CustomExceptions::throwException);
     mockAllocator.provideMemory = false;
-    ASSERT_THROW(db.tableExists("xyz"), CppSQLite3MemoryException);
+    EXPECT_THROW_WITH_MSG(db.tableExists("xyz"), CustomExceptions::SQLiteError, "out of memory when compiling statement (Code 7)");
 }
 
 TEST_F(OutOfMemoryTest, QueryObjectCallsCustomErrorHandler) {

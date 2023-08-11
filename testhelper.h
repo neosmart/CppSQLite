@@ -28,9 +28,9 @@ public:
     }
 };
 
-void throwException(int code, const char* msg, const char* context) {
+void throwException(int code, const std::string& msg, const std::string& context) {
     std::string finalMsg = msg;
-    if(strlen(context) > 0) {
+    if(!context.empty()) {
         finalMsg += std::string(" ") + context;
     }
     if(code != SQLITE_ERROR) {

@@ -6,6 +6,7 @@
 */
 
 #include "CppSQLite3.h"
+#include <fmt/core.h>
 #include <cstdlib>
 #include <utility>
 #include <string>
@@ -21,18 +22,11 @@ int sqlite3_decode_binary(const unsigned char *in, unsigned char *out);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void defaultErrorHandler(int nErrorCode, const char* szErrMsg, const char* /* context*/) {
-    CppSQLite3Buffer buffer;
-    if(nErrorCode == SQLITE_ERROR) {
-        throw CppSQLite3InvalidQuery(szErrMsg);
-    }
+void defaultErrorHandler(int nErrorCode, const std::string& errorMessage, const std::string& /* context*/) {
+    std::string msg = fmt::format("{:s}[{:d}]: {:s}", CppSQLite3Exception::errorCodeAsString(nErrorCode),
+                                  nErrorCode, errorMessage);
 
-    buffer.format("%s[%d]: %s",
-                  CppSQLite3Exception::errorCodeAsString(nErrorCode),
-                  nErrorCode,
-                  szErrMsg ? szErrMsg : "");
-
-    throw CppSQLite3Exception(nErrorCode, buffer);
+    throw CppSQLite3Exception(nErrorCode, msg);
 }
 
 
@@ -122,15 +116,14 @@ void SQLite3Memory::clear()
 ////////////////////////////////////////////////////////////////////////////////
 
 CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
-                                    const char* szErrMess) :
-    std::runtime_error(szErrMess),
-                                    mnErrCode(nErrCode)
+                                    const std::string& errorMessage) :
+    std::runtime_error(errorMessage), mnErrCode(nErrCode)
 {
 
 }
 
 
-const char* CppSQLite3Exception::errorCodeAsString(int nErrCode)
+std::string_view CppSQLite3Exception::errorCodeAsString(int nErrCode)
 {
     switch (nErrCode)
     {
@@ -293,7 +286,7 @@ unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
 
     if (!mpBuf)
     {
-        throw CppSQLite3MemoryException();
+        throw CppSQLite3Exception(SQLITE_NOMEM, "malloc failed");
     }
 
     mbEncoded = false;
@@ -761,9 +754,8 @@ const char* CppSQLite3Table::fieldValue(const char* szField) const
             }
         }
     }
-    CppSQLite3Buffer b;
-    b.format("Invalid field name requested: %Q", szField);
-    throw std::invalid_argument(b);
+    auto msg = fmt::format("Invalid field name requested: '{:s}'", szField );
+    throw std::invalid_argument(msg);
 }
 
 
@@ -1134,16 +1126,16 @@ CppSQLite3DB& CppSQLite3DB::operator=(const CppSQLite3DB& db)
 }
 
 
-void CppSQLite3DB::open(const char* szFile)
+void CppSQLite3DB::open(const char* szFile, int flags)
 {
-    int nRet = sqlite3_open(szFile, &mpDB);
+    //int nRet = sqlite3_open(szFile, &mpDB);
+    int nRet = sqlite3_open_v2(szFile, &mpDB, flags, nullptr);
 
     if (nRet != SQLITE_OK)
     {
         const char* szError = sqlite3_errmsg(mpDB);
-        CppSQLite3Buffer b;
-        auto context = b.format("when opening %s", szFile);
-        mfErrorHandler(nRet, szError, context);
+        auto msg = fmt::format("when opening {:s}", szFile);
+        mfErrorHandler(nRet, szError, msg.c_str());
     }
 
     setBusyTimeout(mnBusyTimeoutMs);
@@ -1176,10 +1168,10 @@ CppSQLite3Statement CppSQLite3DB::compileStatement(const char* szSQL)
 
 bool CppSQLite3DB::tableExists(const char* szTable)
 {
-    CppSQLite3Buffer sql;
-    sql.format( "select count(*) from sqlite_master where type='table' and name=%Q",
-                szTable );
-    int nRet = execScalar(sql);
+    std::string buffer(256, '\0');
+    // use sqlite3_snprintf function as it properly escapes the input string
+    sqlite3_snprintf(static_cast<int>(buffer.size()), buffer.data(), "select count(*) from sqlite_master where type='table' and name=%Q", szTable );
+    int nRet = execScalar(buffer.c_str());
     return (nRet > 0);
 }
 

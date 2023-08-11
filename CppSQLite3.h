@@ -16,7 +16,7 @@
 
 #define CPPSQLITE_ERROR 1000
 
-using CppSQLite3ErrorHandler = void (*)(int, const char*, const char*);
+using CppSQLite3ErrorHandler = void (*)(int, const std::string&, const std::string&);
 
 namespace detail
 {
@@ -66,23 +66,16 @@ class CppSQLite3MemoryException : public std::exception {
 
 };
 
-class CppSQLite3InvalidQuery : public std::logic_error {
-public:
-    CppSQLite3InvalidQuery(const char* szErrMess) : std::logic_error(szErrMess) {
-
-    }
-};
-
 class CppSQLite3Exception : public std::runtime_error
 {
 public:
 
     CppSQLite3Exception(const int nErrCode,
-                    const char* szErrMess);
+                    const std::string &errorMessage);
 
     const int errorCode() const { return mnErrCode; }
 
-    static const char* errorCodeAsString(int nErrCode);
+    static std::string_view errorCodeAsString(int nErrCode);
 
 private:
 
@@ -300,7 +293,12 @@ public:
 
     virtual ~CppSQLite3DB();
 
-    void open(const char* szFile);
+    /**
+     * @brief open opens a database with the given filename
+     * @param szFile the filename of the database
+     * @param flags the SQLITE_OPEN_* flags that are passed on to the sqlite3_open_v2 call
+     */
+    void open(const char* szFile, int flags=SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 
     void close();
 
@@ -314,6 +312,7 @@ public:
 
     int execScalar(const char* szSQL);
 
+    [[deprecated("The underlying sqlite3 calls are only available for legacy reasons and not recommended. Use execQuery instead.")]]
     CppSQLite3Table getTable(const char* szSQL);
 
     CppSQLite3Statement compileStatement(const char* szSQL);
