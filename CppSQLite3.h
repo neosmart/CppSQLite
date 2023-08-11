@@ -18,53 +18,6 @@
 
 using CppSQLite3ErrorHandler = void (*)(int, const std::string&, const std::string&);
 
-namespace detail
-{
-    /**
-     * RAII class for managing memory allocated by sqlite
-    */
-    class SQLite3Memory
-    {
-    public:
-
-        // Default constructor
-        SQLite3Memory();
-        // Constructor that allocates memory of a given size
-        SQLite3Memory(int nBufferLen);
-        // Constructor that formats a string with sqlite memory allocation
-        SQLite3Memory(const char* szFormat, va_list list);
-        // Destructor
-        ~SQLite3Memory();
-
-        // Copy constructor
-        SQLite3Memory(SQLite3Memory const& other);
-        // Copy assignment
-        SQLite3Memory& operator=(SQLite3Memory const& lhs);
-
-        // Move constructor
-        SQLite3Memory(SQLite3Memory&& other);
-        // Move assignment
-        SQLite3Memory& operator=(SQLite3Memory&& lhs);
-
-        // Swap operation
-        void swap(SQLite3Memory& other);
-
-        int getLength() const { return mnBufferLen; }
-
-        void* getBuffer() const { return mpBuf; }
-
-        void clear();
-
-    private:
-
-        int mnBufferLen;
-        void* mpBuf;
-    };
-}
-
-class CppSQLite3MemoryException : public std::exception {
-
-};
 
 class CppSQLite3Exception : public std::runtime_error
 {
@@ -80,51 +33,6 @@ public:
 private:
 
     int mnErrCode;
-};
-
-
-class CppSQLite3Buffer
-{
-public:
-    const char* format(const char* szFormat, ...);
-
-    operator const char*() { return static_cast<char const*>(mBuf.getBuffer()); }
-
-    void clear();
-
-private:
-
-    detail::SQLite3Memory mBuf;
-};
-
-
-class CppSQLite3Binary
-{
-public:
-
-    CppSQLite3Binary();
-
-    ~CppSQLite3Binary();
-
-    void setBinary(const unsigned char* pBuf, int nLen);
-    void setEncoded(const unsigned char* pBuf);
-
-    const unsigned char* getEncoded();
-    const unsigned char* getBinary();
-
-    int getBinaryLength();
-
-    unsigned char* allocBuffer(int nLen);
-
-    void clear();
-
-private:
-
-    unsigned char* mpBuf;
-    int mnBinaryLen;
-    int mnBufferLen;
-    int mnEncodedLen;
-    bool mbEncoded;
 };
 
 
