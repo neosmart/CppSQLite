@@ -893,7 +893,6 @@ CppSQLite3DB& CppSQLite3DB::operator=(const CppSQLite3DB& db)
 
 void CppSQLite3DB::open(const char* szFile, int flags)
 {
-    //int nRet = sqlite3_open(szFile, &mpDB);
     int nRet = sqlite3_open_v2(szFile, &mpDB, flags, nullptr);
 
     if (nRet != SQLITE_OK)
