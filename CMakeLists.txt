@@ -54,7 +54,7 @@ target_link_libraries(OutOfMemoryTest
     GTest::gtest_main
 )
 
-endif(MSVC)
+endif()
 
 set(CPACK_PACKAGE_VENDOR "Bruker Daltonics GmbH")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "c++ wrapper for sqlite library")
@@ -69,8 +69,8 @@ install(TARGETS ${CMAKE_PROJECT_NAME}
         INCLUDES DESTINATION include)
         
 install(FILES CppSQLite3.h TYPE INCLUDE)
-if(WINDOWS)
-install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
+if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
 endif()
 install(FILES LICENSE DESTINATION .)
 
