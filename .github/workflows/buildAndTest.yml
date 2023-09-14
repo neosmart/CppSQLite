@@ -58,7 +58,7 @@ jobs:
       - name: CPack
         if: ${{ github.event_name == 'release' }}
         working-directory: ${{github.workspace}}/build
-        run: cpack -C ${{matrix.BUILD_TYPE}} -D CPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF
+        run: cpack -C ${{matrix.BUILD_TYPE}}
 
       - name: Stash artifact
         # we can't attach the artifact directly to the release because 
