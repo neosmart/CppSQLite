@@ -481,11 +481,31 @@ long long CppSQLite3Query::getInt64Field(const char* szField, long long nNullVal
 }
 
 
-double CppSQLite3Query::getFloatField(int nField, double fNullValue/*=0.0*/) const
+float CppSQLite3Query::getFloatField(int nField, float fNullValue/*=0.0*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
         return fNullValue;
+    }
+    else
+    {
+        return static_cast<float>(sqlite3_column_double(mpVM, nField));
+    }
+}
+
+
+float CppSQLite3Query::getFloatField(const char* szField, float fNullValue/*=0.0*/) const
+{
+    int nField = fieldIndex(szField);
+    return getFloatField(nField, fNullValue);
+}
+
+
+double CppSQLite3Query::getDoubleField(int nField, double dNullValue/*=0.0*/) const
+{
+    if (fieldDataType(nField) == SQLITE_NULL)
+    {
+        return dNullValue;
     }
     else
     {
@@ -494,10 +514,10 @@ double CppSQLite3Query::getFloatField(int nField, double fNullValue/*=0.0*/) con
 }
 
 
-double CppSQLite3Query::getFloatField(const char* szField, double fNullValue/*=0.0*/) const
+double CppSQLite3Query::getDoubleField(const char* szField, double dNullValue/*=0.0*/) const
 {
     int nField = fieldIndex(szField);
-    return getFloatField(nField, fNullValue);
+    return getDoubleField(nField, dNullValue);
 }
 
 
