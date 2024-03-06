@@ -855,11 +855,37 @@ int CppSQLite3Table::getIntField(const char* szField, int nNullValue/*=0*/) cons
 }
 
 
-double CppSQLite3Table::getFloatField(int nField, double fNullValue/*=0.0*/) const
+float CppSQLite3Table::getFloatField(int nField, float fNullValue/*=0.0*/) const
 {
     if (fieldIsNull(nField))
     {
         return fNullValue;
+    }
+    else
+    {
+        return static_cast<float>(atof(fieldValue(nField)));
+    }
+}
+
+
+float CppSQLite3Table::getFloatField(const char* szField, float fNullValue/*=0.0*/) const
+{
+    if (fieldIsNull(szField))
+    {
+        return fNullValue;
+    }
+    else
+    {
+        return static_cast<float>(atof(fieldValue(szField)));
+    }
+}
+
+
+double CppSQLite3Table::getDoubleField(int nField, double dNullValue/*=0.0*/) const
+{
+    if (fieldIsNull(nField))
+    {
+        return dNullValue;
     }
     else
     {
@@ -868,11 +894,11 @@ double CppSQLite3Table::getFloatField(int nField, double fNullValue/*=0.0*/) con
 }
 
 
-double CppSQLite3Table::getFloatField(const char* szField, double fNullValue/*=0.0*/) const
+double CppSQLite3Table::getDoubleField(const char* szField, double dNullValue/*=0.0*/) const
 {
     if (fieldIsNull(szField))
     {
-        return fNullValue;
+        return dNullValue;
     }
     else
     {

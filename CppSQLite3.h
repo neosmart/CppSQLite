@@ -222,8 +222,11 @@ public:
     int getIntField(int nField, int nNullValue=0) const;
     int getIntField(const char* szField, int nNullValue=0) const;
 
-    double getFloatField(int nField, double fNullValue=0.0) const;
-    double getFloatField(const char* szField, double fNullValue=0.0) const;
+    float getFloatField(int nField, float fNullValue=0.0) const;
+    float getFloatField(const char* szField, float fNullValue=0.0) const;
+
+    double getDoubleField(int nField, double dNullValue=0.0f) const;
+    double getDoubleField(const char* szField, double dNullValue=0.0f) const;
 
     const char* getStringField(int nField, const char* szNullValue="") const;
     const char* getStringField(const char* szField, const char* szNullValue="") const;
