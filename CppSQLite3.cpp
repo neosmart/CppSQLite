@@ -481,7 +481,7 @@ long long CppSQLite3Query::getInt64Field(const char* szField, long long nNullVal
 }
 
 
-float CppSQLite3Query::getFloatField(int nField, float fNullValue/*=0.0*/) const
+float CppSQLite3Query::getFloatField(int nField, float fNullValue/*=0.0f*/) const
 {
     if (fieldDataType(nField) == SQLITE_NULL)
     {
@@ -494,7 +494,7 @@ float CppSQLite3Query::getFloatField(int nField, float fNullValue/*=0.0*/) const
 }
 
 
-float CppSQLite3Query::getFloatField(const char* szField, float fNullValue/*=0.0*/) const
+float CppSQLite3Query::getFloatField(const char* szField, float fNullValue/*=0.0f*/) const
 {
     int nField = fieldIndex(szField);
     return getFloatField(nField, fNullValue);
@@ -855,7 +855,7 @@ int CppSQLite3Table::getIntField(const char* szField, int nNullValue/*=0*/) cons
 }
 
 
-float CppSQLite3Table::getFloatField(int nField, float fNullValue/*=0.0*/) const
+float CppSQLite3Table::getFloatField(int nField, float fNullValue/*=0.0f*/) const
 {
     if (fieldIsNull(nField))
     {
@@ -868,7 +868,7 @@ float CppSQLite3Table::getFloatField(int nField, float fNullValue/*=0.0*/) const
 }
 
 
-float CppSQLite3Table::getFloatField(const char* szField, float fNullValue/*=0.0*/) const
+float CppSQLite3Table::getFloatField(const char* szField, float fNullValue/*=0.0f*/) const
 {
     if (fieldIsNull(szField))
     {
