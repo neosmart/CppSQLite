@@ -1,0 +1,10 @@
+IndentWidth: 4
+AccessModifierOffset: -4
+ColumnLimit: 120
+MaxEmptyLinesToKeep: 2
+Language: Cpp
+Standard: c++17
+PointerBindsToType: true
+PointerAlignment: Left
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
