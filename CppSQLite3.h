@@ -151,7 +151,7 @@ public:
 
     CppSQLite3Statement(CppSQLite3Statement&& rStatement);
 
-    CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler);
+    CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler, bool enableLogging);
 
     virtual ~CppSQLite3Statement();
 
@@ -180,6 +180,7 @@ private:
     sqlite3* mpDB;
     sqlite3_stmt* mpVM;
     CppSQLite3ErrorHandler mfErrorHandler;
+    bool mbEnableLogging = false;
 };
 
 
@@ -198,6 +199,11 @@ public:
     void open(const char* szFile, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 
     void close();
+
+    /**
+     * @brief enableVerboseLogging enables logging of all SQL statements & queries
+     */
+    void enableVerboseLogging(bool enable);
 
     bool isOpened() const;
 
@@ -245,6 +251,7 @@ private:
     sqlite3* mpDB;
     int mnBusyTimeoutMs;
     CppSQLite3ErrorHandler mfErrorHandler;
+    bool mbEnableLogging = false;
 };
 
 #endif

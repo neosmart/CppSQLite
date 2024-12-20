@@ -11,6 +11,10 @@
 #include <string>
 #include <utility>
 
+
+#include <iostream> // todo: can we get rid of these once we have the logging callback?
+#include <thread>
+
 namespace
 {
 
@@ -24,6 +28,14 @@ void defaultErrorHandler(int nErrorCode, const std::string& errorMessage, const 
     throw CppSQLite3Exception(nErrorCode, msg);
 }
 
+void logMessage(std::string_view msg)
+{
+    if (msg.length() > 256)
+    {
+        msg = msg.substr(0, 255);
+    }
+    std::cout << "CppSQLite [" << std::this_thread::get_id() << "] " << msg << std::endl;
+} // namespace
 
 } // namespace
 
@@ -699,14 +711,17 @@ CppSQLite3Statement::CppSQLite3Statement(CppSQLite3Statement&& rStatement)
     // Only one object can own VM
     rStatement.mpVM = 0;
     mfErrorHandler = rStatement.mfErrorHandler;
+    mbEnableLogging = rStatement.mbEnableLogging;
 }
 
 
-CppSQLite3Statement::CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler)
+CppSQLite3Statement::CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler,
+                                         bool enableLogging)
 {
     mpDB = pDB;
     mpVM = pVM;
     mfErrorHandler = handler;
+    mbEnableLogging = enableLogging;
 }
 
 
@@ -729,6 +744,7 @@ CppSQLite3Statement& CppSQLite3Statement::operator=(CppSQLite3Statement&& rState
     // Only one object can own VM
     rStatement.mpVM = 0;
     mfErrorHandler = rStatement.mfErrorHandler;
+    mbEnableLogging = rStatement.mbEnableLogging;
     return *this;
 }
 
@@ -740,6 +756,10 @@ int CppSQLite3Statement::execDML()
 
     const char* szError = 0;
 
+    if (mbEnableLogging)
+    {
+        logMessage(sqlite3_expanded_sql(mpVM));
+    }
     int nRet = sqlite3_step(mpVM);
 
     if (nRet == SQLITE_DONE)
@@ -770,6 +790,11 @@ CppSQLite3Query CppSQLite3Statement::execQuery()
 {
     checkDB();
     checkVM();
+
+    if (mbEnableLogging)
+    {
+        logMessage(sqlite3_expanded_sql(mpVM));
+    }
 
     int nRet = sqlite3_step(mpVM);
 
@@ -909,7 +934,14 @@ CppSQLite3DB::CppSQLite3DB(const CppSQLite3DB& db)
 
 CppSQLite3DB::~CppSQLite3DB()
 {
-    close();
+    try
+    {
+        close();
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "error during ~CppSQLite3DB: " << e.what() << std::endl;
+    }
 }
 
 
@@ -923,6 +955,10 @@ CppSQLite3DB& CppSQLite3DB::operator=(const CppSQLite3DB& db)
 
 void CppSQLite3DB::open(const char* szFile, int flags)
 {
+    if (mpDB != nullptr)
+    {
+        throw std::logic_error("Previous db handle was not closed");
+    }
     int nRet = sqlite3_open_v2(szFile, &mpDB, flags, nullptr);
 
     if (nRet != SQLITE_OK)
@@ -940,9 +976,22 @@ void CppSQLite3DB::close()
 {
     if (mpDB)
     {
-        sqlite3_close(mpDB);
-        mpDB = nullptr;
+        auto nRet = sqlite3_close(mpDB);
+        if (nRet == SQLITE_OK)
+        {
+            mpDB = nullptr;
+        }
+        else
+        {
+            const char* szError = sqlite3_errmsg(mpDB);
+            mfErrorHandler(nRet, szError, "when closing connection");
+        }
     }
+}
+
+void CppSQLite3DB::enableVerboseLogging(bool enable)
+{
+    mbEnableLogging = enable;
 }
 
 bool CppSQLite3DB::isOpened() const
@@ -956,7 +1005,7 @@ CppSQLite3Statement CppSQLite3DB::compileStatement(const char* szSQL)
     checkDB();
 
     sqlite3_stmt* pVM = compile(szSQL);
-    return CppSQLite3Statement(mpDB, pVM, mfErrorHandler);
+    return CppSQLite3Statement(mpDB, pVM, mfErrorHandler, mbEnableLogging);
 }
 
 
@@ -976,6 +1025,10 @@ int CppSQLite3DB::execDML(const char* szSQL)
 
     char* szError = 0;
 
+    if (mbEnableLogging)
+    {
+        logMessage(szSQL);
+    }
     int nRet = sqlite3_exec(mpDB, szSQL, 0, 0, &szError);
 
     if (nRet == SQLITE_OK)
@@ -1006,6 +1059,10 @@ CppSQLite3Query CppSQLite3DB::execQuery(const char* szSQL)
 
     sqlite3_stmt* pVM = compile(szSQL);
 
+    if (mbEnableLogging)
+    {
+        logMessage(szSQL);
+    }
     int nRet = sqlite3_step(pVM);
 
     if (nRet == SQLITE_DONE)

@@ -108,6 +108,30 @@ TEST(ErrorHandlerTest, dbThrowsLogicErrorWhenNotOpened)
     EXPECT_THROW_WITH_MSG(db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);"), std::logic_error, "Database not open");
 }
 
+TEST(OpenCloseTest, closeAfterExceptionOnOpen) 
+{
+    CppSQLite3DB db;
+    ASSERT_ANY_THROW(db.open("notExisting.sqlite", SQLITE_OPEN_READONLY));
+    db.close();
+}
+
+TEST(OpenCloseTest, closeWithoutOpen) 
+{
+    CppSQLite3DB db;
+    db.close();
+}
+
+TEST(OpenCloseTest, closeWithoutFinalizingQuery) 
+{
+    CppSQLite3DB db;
+    db.open(":memory:");
+    db.execQuery("CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);");
+    auto query = db.execQuery("SELECT * FROM myTable");
+    EXPECT_THROW_WITH_MSG(db.close(), CppSQLite3Exception,
+                          "SQLITE_BUSY[5]: unable to close due to unfinalized "
+                          "statements or unfinished backups");
+}
+
 TEST(CppSQLite3TableTest, getFieldValue)
 {
     CppSQLite3DB db;
@@ -161,6 +185,28 @@ TEST(CppSQLite3StatementTest, moveOperatorTransfersVMHandle)
     auto stmt2 = std::move(stmt);
     EXPECT_THROW_WITH_MSG(stmt.execQuery(), std::logic_error, "Null Virtual Machine pointer");
     ASSERT_NO_THROW(stmt2.execQuery());
+}
+
+TEST(CppSQLite3DBTest, openTwice) {
+    CppSQLite3DB db;
+    db.open("tmp.sqlite");
+    EXPECT_THROW_WITH_MSG(db.open("tmp.sqlite"), std::logic_error, "Previous db handle was not closed");
+    db.close();
+    EXPECT_NO_THROW(db.open("tmp.sqlite"));
+}
+
+TEST(CppSQLite3DBTest, verboseLogging) {
+    CppSQLite3DB db;
+    db.open(":memory:");
+    db.enableVerboseLogging(true);
+    db.execDML("CREATE TABLE `myTable` (`INFO` TEXT);");
+    db.execDML("INSERT INTO `myTable` VALUES(\"some text\")");
+    db.execQuery("SELECT* FROM `myTable`");
+    auto stmt = db.compileStatement("SELECT* FROM `myTable` WHERE INFO = ?");
+    stmt.execQuery();
+    auto dmlStmt = db.compileStatement("INSERT INTO `myTable` VALUES(?)");
+    dmlStmt.bind(1, "some name");
+    dmlStmt.execDML();
 }
 
 static_assert(std::is_move_constructible<CppSQLite3Query>::value, "move constructible");
