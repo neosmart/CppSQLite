@@ -111,55 +111,6 @@ private:
     CppSQLite3ErrorHandler mfErrorHandler;
 };
 
-
-class CppSQLite3Table
-{
-public:
-    CppSQLite3Table();
-
-    CppSQLite3Table(CppSQLite3Table&& rTable);
-
-    CppSQLite3Table(char** paszResults, int nRows, int nCols);
-
-    virtual ~CppSQLite3Table();
-
-    CppSQLite3Table& operator=(CppSQLite3Table&& rTable);
-
-    int numFields() const;
-
-    int numRows() const;
-
-    const char* fieldName(int nCol) const;
-
-    const char* fieldValue(int nField) const;
-    const char* fieldValue(const char* szField) const;
-
-    int getIntField(int nField, int nNullValue = 0) const;
-    int getIntField(const char* szField, int nNullValue = 0) const;
-
-    double getFloatField(int nField, double fNullValue = 0.0) const;
-    double getFloatField(const char* szField, double fNullValue = 0.0) const;
-
-    const char* getStringField(int nField, const char* szNullValue = "") const;
-    const char* getStringField(const char* szField, const char* szNullValue = "") const;
-
-    bool fieldIsNull(int nField) const;
-    bool fieldIsNull(const char* szField) const;
-
-    void setRow(int nRow);
-
-    void finalize();
-
-private:
-    void checkResults() const;
-
-    int mnCols;
-    int mnRows;
-    int mnCurrentRow;
-    char** mpaszResults;
-};
-
-
 class CppSQLite3Statement
 {
 public:
@@ -243,10 +194,6 @@ public:
     CppSQLite3Query execQuery(const char* szSQL);
 
     int execScalar(const char* szSQL);
-
-    [[deprecated("The underlying sqlite3 calls are only available for legacy reasons and not recommended. Use "
-                 "execQuery instead.")]] CppSQLite3Table
-    getTable(const char* szSQL);
 
     CppSQLite3Statement compileStatement(const char* szSQL);
 
