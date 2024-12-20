@@ -52,6 +52,17 @@ private:
     int mnErrCode;
 };
 
+struct CppSQLite3Config
+{
+    CppSQLite3Config();
+    sqlite3* db;
+    CppSQLite3ErrorHandler errorHandler;
+    CppSQLite3LogHandler logHandler;
+    bool enableVerboseLogging = false;
+    void log(CppSQLite3LogLevel::Level level, const char* message);
+    void log(CppSQLite3LogLevel::Level level, const std::string& message);
+};
+
 class CppSQLite3Query
 {
 public:
@@ -59,7 +70,7 @@ public:
 
     CppSQLite3Query(CppSQLite3Query&& rQuery);
 
-    CppSQLite3Query(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler, bool bEof, bool bOwnVM = true);
+    CppSQLite3Query(const CppSQLite3Config& config, sqlite3_stmt* pVM, bool bEof, bool bOwnVM = true);
 
     CppSQLite3Query& operator=(CppSQLite3Query&& rQuery);
 
@@ -103,12 +114,11 @@ public:
 private:
     void checkVM() const;
 
-    sqlite3* mpDB;
+    CppSQLite3Config mConfig;
     sqlite3_stmt* mpVM;
     bool mbEof;
     int mnCols;
     bool mbOwnVM;
-    CppSQLite3ErrorHandler mfErrorHandler;
 };
 
 class CppSQLite3Statement
@@ -118,7 +128,7 @@ public:
 
     CppSQLite3Statement(CppSQLite3Statement&& rStatement);
 
-    CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler, bool enableLogging);
+    CppSQLite3Statement(const CppSQLite3Config& config, sqlite3_stmt* pVM);
 
     virtual ~CppSQLite3Statement();
 
@@ -144,22 +154,10 @@ private:
     void checkVM() const;
     void checkReturnCode(int returnCode, const char* context);
 
-    sqlite3* mpDB;
+    CppSQLite3Config mConfig;
     sqlite3_stmt* mpVM;
-    CppSQLite3ErrorHandler mfErrorHandler;
-    bool mbEnableLogging = false;
 };
 
-
-struct CppSQLite3Config
-{
-    CppSQLite3Config();
-    sqlite3* db;
-    CppSQLite3ErrorHandler errorHandler;
-    CppSQLite3LogHandler logHandler;
-    bool enableVerboseLogging = false;
-    void log(CppSQLite3LogLevel::Level level, const std::string& message);
-};
 
 class CppSQLite3DB
 {

@@ -12,8 +12,7 @@
 #include <utility>
 
 
-#include <iostream> // todo: can we get rid of these once we have the logging callback?
-#include <thread>
+#include <iostream>
 
 namespace
 {
@@ -32,15 +31,6 @@ void defaultLogHandler(CppSQLite3LogLevel level, const std::string& message)
 {
     std::cout << fmt::format("[CppSQLite3][{}]: {}", level.name, message) << std::endl;
 }
-
-void logMessage(std::string_view msg)
-{
-    if (msg.length() > 256)
-    {
-        msg = msg.substr(0, 255);
-    }
-    std::cout << "CppSQLite [" << std::this_thread::get_id() << "] " << msg << std::endl;
-} // namespace
 
 std::string_view levelToString(CppSQLite3LogLevel::Level level)
 {
@@ -76,13 +66,20 @@ CppSQLite3Config::CppSQLite3Config() : db(nullptr), errorHandler(defaultErrorHan
 {
 }
 
+void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, const char* message)
+{
+    if (message != nullptr)
+    {
+        log(level, std::string(message));
+    }
+}
+
 void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, const std::string& message)
 {
-    if (level == CppSQLite3LogLevel::VERBOSE && !enableVerboseLogging)
+    if (enableVerboseLogging || level != CppSQLite3LogLevel::VERBOSE)
     {
-        return;
+        logHandler(CppSQLite3LogLevel(level), message);
     }
-    logHandler(CppSQLite3LogLevel(level), message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,37 +160,34 @@ std::string_view CppSQLite3Exception::errorCodeAsString(int nErrCode)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-CppSQLite3Query::CppSQLite3Query()
+CppSQLite3Query::CppSQLite3Query() : mConfig{}
 {
     mpVM = 0;
     mbEof = true;
     mnCols = 0;
     mbOwnVM = false;
-    mfErrorHandler = defaultErrorHandler;
 }
 
 
 CppSQLite3Query::CppSQLite3Query(CppSQLite3Query&& rQuery)
 {
+    mConfig = rQuery.mConfig;
     mpVM = rQuery.mpVM;
     // Only one object can own the VM
     rQuery.mpVM = 0;
     mbEof = rQuery.mbEof;
     mnCols = rQuery.mnCols;
     mbOwnVM = rQuery.mbOwnVM;
-    mfErrorHandler = rQuery.mfErrorHandler;
 }
 
 
-CppSQLite3Query::CppSQLite3Query(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler, bool bEof,
-                                 bool bOwnVM /*=true*/)
+CppSQLite3Query::CppSQLite3Query(const CppSQLite3Config& config, sqlite3_stmt* pVM, bool bEof, bool bOwnVM /*=true*/)
 {
-    mpDB = pDB;
+    mConfig = config;
     mpVM = pVM;
     mbEof = bEof;
     mnCols = sqlite3_column_count(mpVM);
     mbOwnVM = bOwnVM;
-    mfErrorHandler = handler;
 }
 
 
@@ -203,8 +197,14 @@ CppSQLite3Query::~CppSQLite3Query()
     {
         finalize();
     }
+    catch (const std::exception& e)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3Query: {}", e.what()));
+    }
+
     catch (...)
     {
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3Query"));
     }
 }
 
@@ -215,15 +215,23 @@ CppSQLite3Query& CppSQLite3Query::operator=(CppSQLite3Query&& rQuery)
     {
         finalize();
     }
+    catch (const std::exception& e)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR,
+                    fmt::format("failed to finalize CppSQLite3Query on reassign: {}", e.what()));
+    }
+
     catch (...)
     {
+        mConfig.log(CppSQLite3LogLevel::ERROR,
+                    fmt::format("unknown error when finalizing CppSQLite3Query on reassign"));
     }
     mpVM = rQuery.mpVM;
     rQuery.mpVM = 0;
     mbEof = rQuery.mbEof;
     mnCols = rQuery.mnCols;
     mbOwnVM = rQuery.mbOwnVM;
-    mfErrorHandler = rQuery.mfErrorHandler;
+    mConfig = rQuery.mConfig;
     return *this;
 }
 
@@ -464,8 +472,8 @@ void CppSQLite3Query::nextRow()
             nRet = sqlite3_reset(mpVM);
         }
         mpVM = 0;
-        const char* szError = sqlite3_errmsg(mpDB);
-        mfErrorHandler(nRet, szError, "when getting next row");
+        const char* szError = sqlite3_errmsg(mConfig.db);
+        mConfig.errorHandler(nRet, szError, "when getting next row");
     }
 }
 
@@ -478,8 +486,8 @@ void CppSQLite3Query::finalize()
         mpVM = 0;
         if (nRet != SQLITE_OK)
         {
-            const char* szError = sqlite3_errmsg(mpDB);
-            mfErrorHandler(nRet, szError, "during finalize");
+            const char* szError = sqlite3_errmsg(mConfig.db);
+            mConfig.errorHandler(nRet, szError, "during finalize");
         }
     }
 }
@@ -495,32 +503,23 @@ void CppSQLite3Query::checkVM() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-CppSQLite3Statement::CppSQLite3Statement()
+CppSQLite3Statement::CppSQLite3Statement() : mConfig{}
 {
-    mpDB = 0;
     mpVM = 0;
-    mfErrorHandler = defaultErrorHandler;
 }
 
 
 CppSQLite3Statement::CppSQLite3Statement(CppSQLite3Statement&& rStatement)
 {
-    mpDB = rStatement.mpDB;
+    mConfig = rStatement.mConfig;
     mpVM = rStatement.mpVM;
     // Only one object can own VM
     rStatement.mpVM = 0;
-    mfErrorHandler = rStatement.mfErrorHandler;
-    mbEnableLogging = rStatement.mbEnableLogging;
 }
 
 
-CppSQLite3Statement::CppSQLite3Statement(sqlite3* pDB, sqlite3_stmt* pVM, CppSQLite3ErrorHandler handler,
-                                         bool enableLogging)
+CppSQLite3Statement::CppSQLite3Statement(const CppSQLite3Config& config, sqlite3_stmt* pVM) : mConfig(config), mpVM(pVM)
 {
-    mpDB = pDB;
-    mpVM = pVM;
-    mfErrorHandler = handler;
-    mbEnableLogging = enableLogging;
 }
 
 
@@ -530,20 +529,40 @@ CppSQLite3Statement::~CppSQLite3Statement()
     {
         finalize();
     }
+    catch (const std::exception& e)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3Statement: {}", e.what()));
+    }
+
     catch (...)
     {
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3Statement"));
     }
 }
 
 
 CppSQLite3Statement& CppSQLite3Statement::operator=(CppSQLite3Statement&& rStatement)
 {
-    mpDB = rStatement.mpDB;
+    try
+    {
+        finalize();
+    }
+    catch (const std::exception& e)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR,
+                    fmt::format("error when finalizing CppSQLite3Statement during reassign: {}", e.what()));
+    }
+
+    catch (...)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR,
+                    fmt::format("unknown error when finalizing ~CppSQLite3Statement during reassign"));
+    }
+
+    mConfig = rStatement.mConfig;
     mpVM = rStatement.mpVM;
     // Only one object can own VM
     rStatement.mpVM = 0;
-    mfErrorHandler = rStatement.mfErrorHandler;
-    mbEnableLogging = rStatement.mbEnableLogging;
     return *this;
 }
 
@@ -555,22 +574,20 @@ int CppSQLite3Statement::execDML()
 
     const char* szError = 0;
 
-    if (mbEnableLogging)
-    {
-        logMessage(sqlite3_expanded_sql(mpVM));
-    }
+    mConfig.log(CppSQLite3LogLevel::VERBOSE, sqlite3_expanded_sql(mpVM));
+
     int nRet = sqlite3_step(mpVM);
 
     if (nRet == SQLITE_DONE)
     {
-        int nRowsChanged = sqlite3_changes(mpDB);
+        int nRowsChanged = sqlite3_changes(mConfig.db);
 
         nRet = sqlite3_reset(mpVM);
 
         if (nRet != SQLITE_OK)
         {
-            szError = sqlite3_errmsg(mpDB);
-            mfErrorHandler(nRet, szError, "when getting number of rows changed");
+            szError = sqlite3_errmsg(mConfig.db);
+            mConfig.errorHandler(nRet, szError, "when getting number of rows changed");
         }
 
         return nRowsChanged;
@@ -578,8 +595,8 @@ int CppSQLite3Statement::execDML()
     else
     {
         nRet = sqlite3_reset(mpVM);
-        szError = sqlite3_errmsg(mpDB);
-        mfErrorHandler(nRet, szError, "when executing DML statement");
+        szError = sqlite3_errmsg(mConfig.db);
+        mConfig.errorHandler(nRet, szError, "when executing DML statement");
         return 0;
     }
 }
@@ -590,28 +607,25 @@ CppSQLite3Query CppSQLite3Statement::execQuery()
     checkDB();
     checkVM();
 
-    if (mbEnableLogging)
-    {
-        logMessage(sqlite3_expanded_sql(mpVM));
-    }
+    mConfig.log(CppSQLite3LogLevel::VERBOSE, sqlite3_expanded_sql(mpVM));
 
     int nRet = sqlite3_step(mpVM);
 
     if (nRet == SQLITE_DONE)
     {
         // no rows
-        return CppSQLite3Query(mpDB, mpVM, mfErrorHandler, true /*eof*/, false);
+        return CppSQLite3Query(mConfig, mpVM, true /*eof*/, false);
     }
     else if (nRet == SQLITE_ROW)
     {
         // at least 1 row
-        return CppSQLite3Query(mpDB, mpVM, mfErrorHandler, false /*eof*/, false);
+        return CppSQLite3Query(mConfig, mpVM, false /*eof*/, false);
     }
     else
     {
         nRet = sqlite3_reset(mpVM);
-        const char* szError = sqlite3_errmsg(mpDB);
-        mfErrorHandler(nRet, szError, "when evaluating query");
+        const char* szError = sqlite3_errmsg(mConfig.db);
+        mConfig.errorHandler(nRet, szError, "when evaluating query");
         return CppSQLite3Query();
     }
 }
@@ -689,7 +703,7 @@ void CppSQLite3Statement::finalize()
 
 void CppSQLite3Statement::checkDB() const
 {
-    if (mpDB == 0)
+    if (mConfig.db == 0)
     {
         throw std::logic_error("Database not open");
     }
@@ -708,8 +722,8 @@ void CppSQLite3Statement::checkReturnCode(int nRes, const char* context)
 {
     if (nRes != SQLITE_OK)
     {
-        const char* szError = sqlite3_errmsg(mpDB);
-        mfErrorHandler(nRes, szError, context);
+        const char* szError = sqlite3_errmsg(mConfig.db);
+        mConfig.errorHandler(nRes, szError, context);
     }
 }
 
@@ -729,6 +743,10 @@ CppSQLite3DB::~CppSQLite3DB()
     catch (std::exception& e)
     {
         mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("during ~CppSQLite3DB: {}", e.what()));
+    }
+    catch (...)
+    {
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3DB"));
     }
 }
 
@@ -784,7 +802,7 @@ CppSQLite3Statement CppSQLite3DB::compileStatement(const char* szSQL)
     checkDB();
 
     sqlite3_stmt* pVM = compile(szSQL);
-    return CppSQLite3Statement(mConfig.db, pVM, mConfig.errorHandler, mConfig.enableVerboseLogging);
+    return CppSQLite3Statement(mConfig, pVM);
 }
 
 
@@ -844,12 +862,12 @@ CppSQLite3Query CppSQLite3DB::execQuery(const char* szSQL)
     if (nRet == SQLITE_DONE)
     {
         // no rows
-        return CppSQLite3Query(mConfig.db, pVM, mConfig.errorHandler, true /*eof*/);
+        return CppSQLite3Query(mConfig, pVM, true /*eof*/);
     }
     else if (nRet == SQLITE_ROW)
     {
         // at least 1 row
-        return CppSQLite3Query(mConfig.db, pVM, mConfig.errorHandler, false /*eof*/);
+        return CppSQLite3Query(mConfig, pVM, false /*eof*/);
     }
     else
     {
