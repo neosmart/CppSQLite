@@ -16,7 +16,24 @@
 
 #define CPPSQLITE_ERROR 1000
 
-using CppSQLite3ErrorHandler = void (*)(int, const std::string&, const std::string&);
+struct CppSQLite3LogLevel
+{
+
+    enum Level
+    {
+        VERBOSE,
+        INFO,
+        WARNING,
+        ERROR
+    } code;
+    std::string_view name;
+
+    explicit CppSQLite3LogLevel(Level level);
+};
+
+using CppSQLite3ErrorHandler = void (*)(int /*sqlite3_error_code*/, const std::string& /* message */,
+                                        const std::string& /* context */);
+using CppSQLite3LogHandler = void (*)(CppSQLite3LogLevel /*level*/, const std::string& /*message */);
 
 
 class CppSQLite3Exception : public std::runtime_error
@@ -34,7 +51,6 @@ public:
 private:
     int mnErrCode;
 };
-
 
 class CppSQLite3Query
 {
@@ -184,10 +200,23 @@ private:
 };
 
 
+struct CppSQLite3Config
+{
+    CppSQLite3Config();
+    sqlite3* db;
+    CppSQLite3ErrorHandler errorHandler;
+    CppSQLite3LogHandler logHandler;
+    bool enableVerboseLogging = false;
+    void log(CppSQLite3LogLevel::Level level, const std::string& message);
+};
+
 class CppSQLite3DB
 {
 public:
     CppSQLite3DB();
+
+    CppSQLite3DB(const CppSQLite3DB& db) = delete;
+    CppSQLite3DB& operator=(const CppSQLite3DB& db) = delete;
 
     virtual ~CppSQLite3DB();
 
@@ -225,14 +254,19 @@ public:
 
     void interrupt()
     {
-        sqlite3_interrupt(mpDB);
+        sqlite3_interrupt(mConfig.db);
     }
 
     void setBusyTimeout(int nMillisecs);
 
     void setErrorHandler(CppSQLite3ErrorHandler h)
     {
-        mfErrorHandler = h;
+        mConfig.errorHandler = h;
+    }
+
+    void setLogHandler(CppSQLite3LogHandler h)
+    {
+        mConfig.logHandler = h;
     }
 
     static const char* SQLiteVersion()
@@ -241,17 +275,11 @@ public:
     }
 
 private:
-    CppSQLite3DB(const CppSQLite3DB& db);
-    CppSQLite3DB& operator=(const CppSQLite3DB& db);
-
     sqlite3_stmt* compile(const char* szSQL);
 
     void checkDB() const;
-
-    sqlite3* mpDB;
+    CppSQLite3Config mConfig;
     int mnBusyTimeoutMs;
-    CppSQLite3ErrorHandler mfErrorHandler;
-    bool mbEnableLogging = false;
 };
 
 #endif
