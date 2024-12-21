@@ -464,14 +464,8 @@ void CppSQLite3Query::nextRow()
         if (mbOwnVM)
         {
             nRet = sqlite3_finalize(mpVM);
+            mpVM = 0;
         }
-        else
-        {
-            // due to goofy interface of sqlite3_step
-            // use sqlite3_prepare_v2 or sqlite3_prepare_v3() to avoid it
-            nRet = sqlite3_reset(mpVM);
-        }
-        mpVM = 0;
         const char* szError = sqlite3_errmsg(mConfig.db);
         mConfig.errorHandler(nRet, szError, "when getting next row");
     }
@@ -920,7 +914,8 @@ sqlite3_stmt* CppSQLite3DB::compile(const char* szSQL)
     const char* szTail = 0;
     sqlite3_stmt* pVM;
 
-    int nRet = sqlite3_prepare(mConfig.db, szSQL, -1, &pVM, &szTail);
+    int prepareFlags = 0;
+    int nRet = sqlite3_prepare_v3(mConfig.db, szSQL, -1, prepareFlags, &pVM, &szTail);
     const char* szError = sqlite3_errmsg(mConfig.db);
 
     if (nRet != SQLITE_OK)
