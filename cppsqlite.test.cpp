@@ -1,9 +1,28 @@
 #include "CppSQLite3.h"
 #include "testhelper.h"
 
+#include <filesystem>
 #include <type_traits>
 
 #include <gtest/gtest.h>
+
+namespace
+{
+// Log handler is a function pointer, so we can't provide capturing lambdas in our tests
+// Instead provide this singleton. Don't forget to getRecords().clear() after usage!
+std::vector<std::string>& getRecords()
+{
+    static std::vector<std::string> records;
+    return records;
+}
+
+void removeIfExists(const std::filesystem::path& path)
+{
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+}
+
+} // namespace
 
 TEST(ExecQueryTest, throwsOnSyntaxError)
 {
@@ -122,6 +141,28 @@ TEST(OpenCloseTest, closeWithoutFinalizingQuery)
                           "statements or unfinished backups");
 }
 
+TEST(OpenCloseTest, destructWithoutFinalizingQuery)
+{
+    CppSQLite3Query query;
+    {
+        CppSQLite3DB db;
+        db.setLogHandler(
+            [](CppSQLite3LogLevel level, const std::string& message)
+            {
+                ASSERT_EQ(CppSQLite3LogLevel::ERROR, level.code);
+                getRecords().push_back(message);
+            });
+        db.open(":memory:");
+        db.execQuery("CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);");
+        query = db.execQuery("SELECT * FROM myTable");
+        // error, query survives db
+    }
+    std::vector<std::string> expected = {"error during ~CppSQLite3DB: SQLITE_BUSY[5]: unable to close due to "
+                                         "unfinalized statements or unfinished backups"};
+    ASSERT_EQ(expected, getRecords());
+    getRecords().clear();
+}
+
 TEST(CppSQLite3QueryTest, moveOperatorTransfersVMHandle)
 {
     CppSQLite3DB db;
@@ -149,13 +190,26 @@ TEST(CppSQLite3StatementTest, moveOperatorTransfersVMHandle)
 TEST(CppSQLite3DBTest, openTwice)
 {
     CppSQLite3DB db;
-    db.open("tmp.sqlite");
-    EXPECT_THROW_WITH_MSG(db.open("tmp.sqlite"), std::logic_error, "Previous db handle was not closed");
+    db.open(":memory:");
+    EXPECT_THROW_WITH_MSG(db.open(":memory:"), std::logic_error, "Previous db handle was not closed");
     db.close();
-    EXPECT_NO_THROW(db.open("tmp.sqlite"));
+    EXPECT_NO_THROW(db.open(":memory:"));
 }
 
-TEST(CppSQLite3DBTest, verboseLogging)
+TEST(CppSQLite3DBTest, runCheckpoint)
+{
+    removeIfExists("checkpointTest.sqlite");
+    CppSQLite3DB db;
+    db.open("checkpointTest.sqlite");
+    db.execQuery("PRAGMA journal_mode=wal");
+    db.execDML("CREATE TABLE `myTable` (`INFO` TEXT);");
+    ASSERT_GT(std::filesystem::file_size("checkpointTest.sqlite-wal"), 0);
+
+    ASSERT_NO_THROW(db.performCheckpoint("", SQLITE_CHECKPOINT_TRUNCATE));
+    ASSERT_EQ(std::filesystem::file_size("checkpointTest.sqlite-wal"), 0);
+}
+
+TEST(CppSQLite3DBTest, verboseLoggingWithDefaultLogHandler)
 {
     CppSQLite3DB db;
     db.open(":memory:");
@@ -168,6 +222,37 @@ TEST(CppSQLite3DBTest, verboseLogging)
     auto dmlStmt = db.compileStatement("INSERT INTO `myTable` VALUES(?)");
     dmlStmt.bind(1, "some name");
     dmlStmt.execDML();
+}
+
+TEST(CppSQLite3DBTest, verboseLoggingWithCustomHandler)
+{
+    CppSQLite3DB db;
+    db.open(":memory:");
+    db.enableVerboseLogging(true);
+
+    // std::vector<std::string> records;
+
+    db.setLogHandler(
+        [](CppSQLite3LogLevel level, const std::string& message)
+        {
+            ASSERT_EQ(level.code, CppSQLite3LogLevel::VERBOSE);
+            ASSERT_EQ(level.name, "Verbose");
+            getRecords().push_back(message);
+        });
+    db.execDML("CREATE TABLE `myTable` (`INFO` TEXT);");
+    db.execDML("INSERT INTO `myTable` VALUES(\"some text\")");
+    db.execQuery("SELECT* FROM `myTable`");
+    auto stmt = db.compileStatement("SELECT* FROM `myTable` WHERE INFO = ?");
+    stmt.execQuery();
+    auto dmlStmt = db.compileStatement("INSERT INTO `myTable` VALUES(?)");
+    dmlStmt.bind(1, "some name");
+    dmlStmt.execDML();
+    std::vector<std::string> expectedMessages = {"CREATE TABLE `myTable` (`INFO` TEXT);",
+                                                 "INSERT INTO `myTable` VALUES(\"some text\")",
+                                                 "SELECT* FROM `myTable`", "SELECT* FROM `myTable` WHERE INFO = NULL",
+                                                 "INSERT INTO `myTable` VALUES('some name')"};
+    ASSERT_EQ(expectedMessages, getRecords());
+    getRecords().clear();
 }
 
 static_assert(std::is_move_constructible<CppSQLite3Query>::value, "move constructible");

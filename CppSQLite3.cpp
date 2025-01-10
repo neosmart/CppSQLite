@@ -29,7 +29,14 @@ void defaultErrorHandler(int nErrorCode, const std::string& errorMessage, const 
 
 void defaultLogHandler(CppSQLite3LogLevel level, const std::string& message)
 {
-    std::cout << fmt::format("[CppSQLite3][{}]: {}", level.name, message) << std::endl;
+    std::string_view clamped = message;
+    // on verbose level we might get very long messages with queries that contain blob data or large strings
+    // therefore perform some clamping:
+    if (level.code == CppSQLite3LogLevel::VERBOSE && clamped.length() > 256)
+    {
+        clamped = clamped.substr(0, 255);
+    }
+    std::cout << fmt::format("[CppSQLite3][{}]: {}", level.name, clamped) << std::endl;
 }
 
 std::string_view levelToString(CppSQLite3LogLevel::Level level)
@@ -76,6 +83,7 @@ void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, const char* message)
 
 void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, const std::string& message)
 {
+
     if (enableVerboseLogging || level != CppSQLite3LogLevel::VERBOSE)
     {
         logHandler(CppSQLite3LogLevel(level), message);
@@ -736,7 +744,7 @@ CppSQLite3DB::~CppSQLite3DB()
     }
     catch (std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("during ~CppSQLite3DB: {}", e.what()));
+        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3DB: {}", e.what()));
     }
     catch (...)
     {
@@ -895,6 +903,26 @@ void CppSQLite3DB::setBusyTimeout(int nMillisecs)
 {
     mnBusyTimeoutMs = nMillisecs;
     sqlite3_busy_timeout(mConfig.db, mnBusyTimeoutMs);
+}
+
+void CppSQLite3DB::setErrorHandler(CppSQLite3ErrorHandler h)
+{
+    mConfig.errorHandler = h;
+}
+
+void CppSQLite3DB::setLogHandler(CppSQLite3LogHandler h)
+{
+    mConfig.logHandler = h;
+}
+
+void CppSQLite3DB::performCheckpoint(const std::string& dbName, int mode)
+{
+    int nRet = sqlite3_wal_checkpoint_v2(mConfig.db, dbName.c_str(), mode, nullptr, nullptr);
+    if (nRet != SQLITE_OK)
+    {
+        const char* szError = sqlite3_errmsg(mConfig.db);
+        mConfig.errorHandler(nRet, szError, "when performing checkpoint");
+    }
 }
 
 

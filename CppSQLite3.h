@@ -204,20 +204,21 @@ public:
 
     void setBusyTimeout(int nMillisecs);
 
-    void setErrorHandler(CppSQLite3ErrorHandler h)
-    {
-        mConfig.errorHandler = h;
-    }
+    void setErrorHandler(CppSQLite3ErrorHandler h);
 
-    void setLogHandler(CppSQLite3LogHandler h)
-    {
-        mConfig.logHandler = h;
-    }
+    void setLogHandler(CppSQLite3LogHandler h);
 
     static const char* SQLiteVersion()
     {
         return SQLITE_VERSION;
     }
+
+    /**
+     * @brief performCheckpoint wraps sqlite3_wal_checkpoint_v2
+     * @param dbName name of the attached database (or empty)
+     * @param mode SQLITE_CHECKPOINT_* value
+     */
+    void performCheckpoint(const std::string& dbName = "", int mode = SQLITE_CHECKPOINT_PASSIVE);
 
 private:
     sqlite3_stmt* compile(const char* szSQL);
