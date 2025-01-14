@@ -147,10 +147,10 @@ TEST(OpenCloseTest, destructWithoutFinalizingQuery)
     {
         CppSQLite3DB db;
         db.setLogHandler(
-            [](CppSQLite3LogLevel level, const std::string& message)
+            [](CppSQLite3LogLevel level, std::string_view message)
             {
                 ASSERT_EQ(CppSQLite3LogLevel::ERROR, level.code);
-                getRecords().push_back(message);
+                getRecords().emplace_back(message);
             });
         db.open(":memory:");
         db.execQuery("CREATE TABLE `myTable` (`ID` INT NOT NULL UNIQUE,`INFO` TEXT);");
@@ -233,11 +233,11 @@ TEST(CppSQLite3DBTest, verboseLoggingWithCustomHandler)
     // std::vector<std::string> records;
 
     db.setLogHandler(
-        [](CppSQLite3LogLevel level, const std::string& message)
+        [](CppSQLite3LogLevel level, std::string_view message)
         {
             ASSERT_EQ(level.code, CppSQLite3LogLevel::VERBOSE);
             ASSERT_EQ(level.name, "Verbose");
-            getRecords().push_back(message);
+            getRecords().emplace_back(message);
         });
     db.execDML("CREATE TABLE `myTable` (`INFO` TEXT);");
     db.execDML("INSERT INTO `myTable` VALUES(\"some text\")");
@@ -254,6 +254,38 @@ TEST(CppSQLite3DBTest, verboseLoggingWithCustomHandler)
     ASSERT_EQ(expectedMessages, getRecords());
     getRecords().clear();
 }
+
+
+TEST(StringViewTest, createStringView)
+{
+    std::string_view test;
+    auto stdString = std::string("test");
+    CppSQLite3StringView view = stdString;
+    ASSERT_STREQ(view.c_str(), "test");
+    ASSERT_EQ(stdString.c_str(), view.c_str());
+    view = "from C-String";
+    ASSERT_STREQ(view.c_str(), "from C-String");
+    const char arr[] = "from C-Array";
+    view = arr;
+    ASSERT_STREQ(view.c_str(), "from C-Array");
+}
+
+TEST(StringViewTest, rValueUsage)
+{
+    auto func = [](CppSQLite3StringView view) { return std::string(view.c_str()); };
+    ASSERT_EQ(func("test"), "test");
+    ASSERT_EQ(func(std::string("test")), "test");
+}
+
+TEST(StringViewTest, comparisons)
+{
+    ASSERT_EQ(CppSQLite3StringView("test"), CppSQLite3StringView("test"));
+    ASSERT_NE(CppSQLite3StringView("test"), CppSQLite3StringView("tesst"));
+    ASSERT_TRUE(CppSQLite3StringView("abc") < CppSQLite3StringView("abd"));
+    ASSERT_FALSE(CppSQLite3StringView("abc") < CppSQLite3StringView("abc"));
+    ASSERT_FALSE(CppSQLite3StringView("abd") < CppSQLite3StringView("abc"));
+}
+
 
 static_assert(std::is_move_constructible<CppSQLite3Query>::value, "move constructible");
 static_assert(std::is_move_assignable<CppSQLite3Query>::value, "move assignable");

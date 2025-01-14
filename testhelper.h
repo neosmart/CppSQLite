@@ -1,5 +1,6 @@
 #pragma once
 #include "CppSQLite3.h"
+#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #define EXPECT_THROW_WITH_MSG(statement, expected_exception, message)                                                  \
@@ -38,16 +39,16 @@ public:
     }
 };
 
-void throwException(int code, const std::string& msg, const std::string& context)
+void throwException(int code, std::string_view msg, std::string_view context)
 {
-    std::string finalMsg = msg;
+    std::string finalMsg = std::string(msg);
     if (!context.empty())
     {
-        finalMsg += std::string(" ") + context;
+        finalMsg += fmt::format(" {}", context);
     }
     if (code != SQLITE_ERROR)
     {
-        finalMsg += " (Code " + std::to_string(code) + ")";
+        finalMsg += fmt::format(" (Code {})", code);
     }
 
     if (code == SQLITE_ERROR)

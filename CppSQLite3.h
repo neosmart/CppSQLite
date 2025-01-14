@@ -16,9 +16,55 @@
 
 #define CPPSQLITE_ERROR 1000
 
+/**
+ * @brief CppSQLite3StringView defines a very basic string view and can be constructed from C-style strings and
+ * std::strings.
+ * Unlike std::string_view, It doesn't store a size and input strings need to be null-terminated and UTF-8 encoded.
+ * Unlike std::string_view, it can safely be created from a nullptr.
+ */
+class CppSQLite3StringView
+{
+public:
+    CppSQLite3StringView(const std::string& str) : str_(str.c_str()) // implicitly converts from std::string
+    {
+    }
+
+    CppSQLite3StringView(const char* str) : str_(str) // implicitly converts from C-style strings
+    {
+    }
+
+    constexpr const char* c_str() const
+    {
+        return str_;
+    }
+
+    operator std::string_view() const
+    {
+        return str_ == nullptr ? std::string_view() : std::string_view(str_);
+    }
+
+private:
+    const char* str_ = nullptr;
+};
+
+
+inline bool operator==(CppSQLite3StringView lhs, CppSQLite3StringView rhs) noexcept
+{
+    return std::string_view(lhs.c_str()) == std::string_view(rhs.c_str());
+}
+
+inline bool operator!=(CppSQLite3StringView lhs, CppSQLite3StringView rhs) noexcept
+{
+    return std::string_view(lhs.c_str()) != std::string_view(rhs.c_str());
+}
+
+inline bool operator<(CppSQLite3StringView lhs, CppSQLite3StringView rhs) noexcept
+{
+    return std::string_view(lhs.c_str()) < std::string_view(rhs.c_str());
+}
+
 struct CppSQLite3LogLevel
 {
-
     enum Level
     {
         VERBOSE,
@@ -31,9 +77,9 @@ struct CppSQLite3LogLevel
     explicit CppSQLite3LogLevel(Level level);
 };
 
-using CppSQLite3ErrorHandler = void (*)(int /*sqlite3_error_code*/, const std::string& /* message */,
-                                        const std::string& /* context */);
-using CppSQLite3LogHandler = void (*)(CppSQLite3LogLevel /*level*/, const std::string& /*message */);
+using CppSQLite3ErrorHandler = void (*)(int /*sqlite3_error_code*/, std::string_view /* message */,
+                                        std::string_view /* context */);
+using CppSQLite3LogHandler = void (*)(CppSQLite3LogLevel /*level*/, std::string_view /*message */);
 
 
 class CppSQLite3Exception : public std::runtime_error
@@ -59,8 +105,7 @@ struct CppSQLite3Config
     CppSQLite3ErrorHandler errorHandler;
     CppSQLite3LogHandler logHandler;
     bool enableVerboseLogging = false;
-    void log(CppSQLite3LogLevel::Level level, const char* message);
-    void log(CppSQLite3LogLevel::Level level, const std::string& message);
+    void log(CppSQLite3LogLevel::Level level, CppSQLite3StringView message);
 };
 
 class CppSQLite3Query
@@ -78,32 +123,32 @@ public:
 
     int numFields() const;
 
-    int fieldIndex(const char* szField) const;
+    int fieldIndex(CppSQLite3StringView field) const;
     const char* fieldName(int nCol) const;
 
     const char* fieldDeclType(int nCol) const;
     int fieldDataType(int nCol) const;
 
     const char* fieldValue(int nField) const;
-    const char* fieldValue(const char* szField) const;
+    const char* fieldValue(CppSQLite3StringView field) const;
 
     int getIntField(int nField, int nNullValue = 0) const;
-    int getIntField(const char* szField, int nNullValue = 0) const;
+    int getIntField(CppSQLite3StringView field, int nNullValue = 0) const;
 
     long long getInt64Field(int nField, long long nNullValue = 0) const;
-    long long getInt64Field(const char* szField, long long nNullValue = 0) const;
+    long long getInt64Field(CppSQLite3StringView field, long long nNullValue = 0) const;
 
     double getFloatField(int nField, double fNullValue = 0.0) const;
-    double getFloatField(const char* szField, double fNullValue = 0.0) const;
+    double getFloatField(CppSQLite3StringView field, double fNullValue = 0.0) const;
 
     const char* getStringField(int nField, const char* szNullValue = "") const;
-    const char* getStringField(const char* szField, const char* szNullValue = "") const;
+    const char* getStringField(CppSQLite3StringView field, const char* szNullValue = "") const;
 
     const unsigned char* getBlobField(int nField, int& nLen) const;
-    const unsigned char* getBlobField(const char* szField, int& nLen) const;
+    const unsigned char* getBlobField(CppSQLite3StringView field, int& nLen) const;
 
     bool fieldIsNull(int nField) const;
-    bool fieldIsNull(const char* szField) const;
+    bool fieldIsNull(CppSQLite3StringView field) const;
 
     bool eof() const;
 
@@ -138,7 +183,7 @@ public:
 
     CppSQLite3Query execQuery();
 
-    void bind(int nParam, const char* szValue);
+    void bind(int nParam, CppSQLite3StringView value);
     void bind(int nParam, const int nValue);
     void bind(int nParam, const long long nValue);
     void bind(int nParam, const double dwValue);
@@ -174,7 +219,7 @@ public:
      * @param szFile the filename of the database
      * @param flags the SQLITE_OPEN_* flags that are passed on to the sqlite3_open_v2 call
      */
-    void open(const char* szFile, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+    void open(CppSQLite3StringView fileName, int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 
     void close();
 
@@ -185,13 +230,13 @@ public:
 
     bool isOpened() const;
 
-    bool tableExists(const char* szTable);
+    bool tableExists(CppSQLite3StringView table);
 
-    int execDML(const char* szSQL);
+    int execDML(CppSQLite3StringView szSQL);
 
-    CppSQLite3Query execQuery(const char* szSQL);
+    CppSQLite3Query execQuery(CppSQLite3StringView szSQL);
 
-    int execScalar(const char* szSQL);
+    int execScalar(CppSQLite3StringView szSQL);
 
     CppSQLite3Statement compileStatement(const char* szSQL);
 
@@ -218,10 +263,10 @@ public:
      * @param dbName name of the attached database (or empty)
      * @param mode SQLITE_CHECKPOINT_* value
      */
-    void performCheckpoint(const std::string& dbName = "", int mode = SQLITE_CHECKPOINT_PASSIVE);
+    void performCheckpoint(CppSQLite3StringView dbName = "", int mode = SQLITE_CHECKPOINT_PASSIVE);
 
 private:
-    sqlite3_stmt* compile(const char* szSQL);
+    sqlite3_stmt* compile(CppSQLite3StringView szSQL);
 
     void checkDB() const;
     CppSQLite3Config mConfig;

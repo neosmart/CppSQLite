@@ -35,6 +35,7 @@ add_test(NAME cppSqliteTest COMMAND cppSqliteTest)
 
 target_link_libraries(cppSqliteTest
     ${CMAKE_PROJECT_NAME}
+    fmt::fmt
     GTest::gtest_main
 )
 
@@ -51,6 +52,7 @@ add_test(NAME OutOfMemoryTest COMMAND OutOfMemoryTest)
 
 target_link_libraries(OutOfMemoryTest
     ${CMAKE_PROJECT_NAME}
+    fmt::fmt
     GTest::gtest_main
 )
 
