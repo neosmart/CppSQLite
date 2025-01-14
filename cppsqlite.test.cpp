@@ -272,7 +272,7 @@ TEST(StringViewTest, createStringView)
 
 TEST(StringViewTest, rValueUsage)
 {
-    auto func = [](CppSQLite3StringView view) { return std::string(view.c_str()); };
+    auto func = [](CppSQLite3StringView view) { return std::string(view); };
     ASSERT_EQ(func("test"), "test");
     ASSERT_EQ(func(std::string("test")), "test");
 }

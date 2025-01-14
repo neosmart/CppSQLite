@@ -109,7 +109,7 @@ TEST_F(OutOfMemoryTest, QueryObjectCallsCustomErrorHandler)
     db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);");
     db.execQuery("INSERT INTO `myTable` VALUES(\"some text\")");
     auto insertLongValue = "INSERT INTO `myTable` VALUES(\"" + std::string(5000, '*') + "\")";
-    db.execQuery(insertLongValue.c_str());
+    db.execQuery(insertLongValue);
     auto query = db.execQuery("SELECT * FROM `myTable`");
     mockAllocator.provideMemory = false;
     EXPECT_THROW_WITH_MSG(query.nextRow(), CustomExceptions::SQLiteError,
@@ -124,7 +124,7 @@ TEST_F(OutOfMemoryTest, QueryObjectFromCompiledStatementCallsCustomErrorHandler)
     db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);");
     db.execQuery("INSERT INTO `myTable` VALUES(\"some text\")");
     auto insertLongValue = "INSERT INTO `myTable` VALUES(\"" + std::string(2000, '*') + "\")";
-    db.execQuery(insertLongValue.c_str());
+    db.execQuery(insertLongValue);
     auto statement = db.compileStatement("SELECT * FROM `myTable`");
     auto query = statement.execQuery();
     mockAllocator.provideMemory = false;
@@ -142,7 +142,7 @@ TEST_F(OutOfMemoryTest, execDMLFromDBCallsCustomErrorHandler)
     std::string stmt = "insert into `myTable` values ('" + longString + "');";
     mockAllocator.provideMemory = false;
 
-    EXPECT_THROW_WITH_MSG(db.execDML(stmt.c_str()), CustomExceptions::SQLiteError,
+    EXPECT_THROW_WITH_MSG(db.execDML(stmt), CustomExceptions::SQLiteError,
                           "out of memory when executing DML query (Code 7)");
 }
 
@@ -154,7 +154,7 @@ TEST_F(OutOfMemoryTest, execDMLFromCompiledstatementCallsCustomErrorHandler)
     db.execQuery("CREATE TABLE `myTable` (`INFO` TEXT);");
     CppSQLite3Statement stmt = db.compileStatement("insert into `myTable` values (?);");
     std::string longString(2000, '*');
-    stmt.bind(1, longString.c_str());
+    stmt.bind(1, longString);
     mockAllocator.provideMemory = false;
     EXPECT_THROW_WITH_MSG(stmt.execDML(), CustomExceptions::SQLiteError,
                           "out of memory when executing DML statement (Code 7)");
@@ -167,7 +167,7 @@ TEST_F(OutOfMemoryTest, execQueryFromCompiledstatementCallsCustomErrorHandler)
     db.setErrorHandler(CustomExceptions::throwException);
     db.execDML("CREATE TABLE `myTable` (`INFO` TEXT);");
     auto insertLongValue = "INSERT INTO `myTable` VALUES(\"" + std::string(2000, '*') + "\")";
-    db.execDML(insertLongValue.c_str());
+    db.execDML(insertLongValue);
     CppSQLite3Statement stmt = db.compileStatement("SELECT * FROM `myTable`;");
     mockAllocator.provideMemory = false;
     EXPECT_THROW_WITH_MSG(stmt.execQuery(), CustomExceptions::SQLiteError,
@@ -183,7 +183,7 @@ TEST_F(OutOfMemoryTest, bindCallsCustomErrorHandler)
     CppSQLite3Statement stmt = db.compileStatement("insert into `myTable` values (?);");
     mockAllocator.provideMemory = false;
     std::string longString(2000, '*');
-    EXPECT_THROW_WITH_MSG(stmt.bind(1, longString.c_str()), CustomExceptions::SQLiteError,
+    EXPECT_THROW_WITH_MSG(stmt.bind(1, longString), CustomExceptions::SQLiteError,
                           "out of memory when binding string param (Code 7)");
 }
 
