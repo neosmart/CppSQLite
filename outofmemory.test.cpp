@@ -76,7 +76,7 @@ public:
     {
         sqlite3_mem_methods mem{mockMalloc,     mockFree, mockRealloc,  mockMemSize,
                                 mockMemRoundup, mockInit, mockShutdown, 0};
-        sqlite3_config(SQLITE_CONFIG_MALLOC, mem);
+        sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
     }
 
     void TearDown()

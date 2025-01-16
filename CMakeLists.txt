@@ -39,10 +39,6 @@ target_link_libraries(cppSqliteTest
     GTest::gtest_main
 )
 
-if(MSVC)
-# OutOfMemory test fixture was only tested with msvc and crashes on linux/gcc.
-# This doesn't mean the library doesn't work on linux, just that the test setup
-# using sqlite3_config is not correct yet.
 add_executable(OutOfMemoryTest
     testhelper.h
     outofmemory.test.cpp
@@ -55,8 +51,6 @@ target_link_libraries(OutOfMemoryTest
     fmt::fmt
     GTest::gtest_main
 )
-
-endif()
 
 set(CPACK_PACKAGE_VENDOR "Bruker Daltonics GmbH")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "c++ wrapper for sqlite library")
