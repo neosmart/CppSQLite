@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2019]
+        os: [ubuntu-22.04, windows-2019]
         BUILD_TYPE: [RelWithDebInfo, Debug]
         include: 
           - CONAN_BUILD_TYPE: Debug
@@ -27,14 +27,14 @@ jobs:
         id: conan
         uses: turtlebrowser/get-conan@main
         with: 
-          version: 1.59.0
+          version: 1.66.0
       
       - name: Detect Conan Profile
         run: conan profile new default --detect
       
       - name: Fix libcxx setting
         run: conan profile update settings.compiler.libcxx=libstdc++11 default
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-22.04'
     
       - name: Install Dependencies
         run: conan install --install-folder ${{github.workspace}}/build -s build_type=${{matrix.CONAN_BUILD_TYPE}} -o sqlite3:shared=True .
@@ -77,9 +77,9 @@ jobs:
     if: ${{ github.event_name == 'release' }}      
     strategy:
       matrix:
-        artifact_os: [ubuntu-latest, windows-2019]
+        artifact_os: [ubuntu-22.04, windows-2019]
         artifact_build_type: [RelWithDebInfo, Debug]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Unstash artifact
         uses: actions/download-artifact@v3
