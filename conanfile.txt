@@ -1,7 +1,7 @@
 [requires]
-sqlite3/3.40.0
-gtest/1.13.0
-fmt/10.0.0
+sqlite3/3.47.0
+gtest/1.15.0
+fmt/11.0.0
 [generators]
 cmake_find_package
 
