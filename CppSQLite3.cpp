@@ -32,10 +32,7 @@ void defaultLogHandler(CppSQLite3LogLevel level, std::string_view message)
     std::string_view clamped = message;
     // on verbose level we might get very long messages with queries that contain blob data or large strings
     // therefore perform some clamping:
-    if (level.code == CppSQLite3LogLevel::VERBOSE && clamped.length() > 256)
-    {
-        clamped = clamped.substr(0, 255);
-    }
+    clamped = clamped.substr(0, 256);
     std::cout << fmt::format("[CppSQLite3][{}]: {}", level.name, clamped) << std::endl;
 }
 
