@@ -41,13 +41,13 @@ std::string_view levelToString(CppSQLite3LogLevel::Level level)
     using Level = CppSQLite3LogLevel::Level;
     switch (level)
     {
-    case Level::ERROR:
+    case Level::error:
         return "Error";
-    case Level::WARNING:
+    case Level::warning:
         return "Warning";
-    case Level::INFO:
+    case Level::info:
         return "Info";
-    case Level::VERBOSE:
+    case Level::verbose:
         return "Verbose";
     }
     // unreachable
@@ -72,7 +72,7 @@ CppSQLite3Config::CppSQLite3Config() : db(nullptr), errorHandler(defaultErrorHan
 
 void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, CppSQLite3StringView message)
 {
-    if (enableVerboseLogging || level != CppSQLite3LogLevel::VERBOSE)
+    if (enableVerboseLogging || level != CppSQLite3LogLevel::verbose)
     {
         logHandler(CppSQLite3LogLevel(level), message);
     }
@@ -195,12 +195,12 @@ CppSQLite3Query::~CppSQLite3Query()
     }
     catch (const std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3Query: {}", e.what()));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("error during ~CppSQLite3Query: {}", e.what()));
     }
 
     catch (...)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3Query"));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("unknown error during ~CppSQLite3Query"));
     }
 }
 
@@ -213,13 +213,13 @@ CppSQLite3Query& CppSQLite3Query::operator=(CppSQLite3Query&& rQuery)
     }
     catch (const std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR,
+        mConfig.log(CppSQLite3LogLevel::error,
                     fmt::format("failed to finalize CppSQLite3Query on reassign: {}", e.what()));
     }
 
     catch (...)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR,
+        mConfig.log(CppSQLite3LogLevel::error,
                     fmt::format("unknown error when finalizing CppSQLite3Query on reassign"));
     }
     mpVM = rQuery.mpVM;
@@ -521,12 +521,12 @@ CppSQLite3Statement::~CppSQLite3Statement()
     }
     catch (const std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3Statement: {}", e.what()));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("error during ~CppSQLite3Statement: {}", e.what()));
     }
 
     catch (...)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3Statement"));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("unknown error during ~CppSQLite3Statement"));
     }
 }
 
@@ -539,13 +539,13 @@ CppSQLite3Statement& CppSQLite3Statement::operator=(CppSQLite3Statement&& rState
     }
     catch (const std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR,
+        mConfig.log(CppSQLite3LogLevel::error,
                     fmt::format("error when finalizing CppSQLite3Statement during reassign: {}", e.what()));
     }
 
     catch (...)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR,
+        mConfig.log(CppSQLite3LogLevel::error,
                     fmt::format("unknown error when finalizing ~CppSQLite3Statement during reassign"));
     }
 
@@ -564,7 +564,7 @@ int CppSQLite3Statement::execDML()
 
     const char* szError = 0;
 
-    mConfig.log(CppSQLite3LogLevel::VERBOSE, sqlite3_expanded_sql(mpVM));
+    mConfig.log(CppSQLite3LogLevel::verbose, sqlite3_expanded_sql(mpVM));
 
     int nRet = sqlite3_step(mpVM);
 
@@ -597,7 +597,7 @@ CppSQLite3Query CppSQLite3Statement::execQuery()
     checkDB();
     checkVM();
 
-    mConfig.log(CppSQLite3LogLevel::VERBOSE, sqlite3_expanded_sql(mpVM));
+    mConfig.log(CppSQLite3LogLevel::verbose, sqlite3_expanded_sql(mpVM));
 
     int nRet = sqlite3_step(mpVM);
 
@@ -732,11 +732,11 @@ CppSQLite3DB::~CppSQLite3DB()
     }
     catch (std::exception& e)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("error during ~CppSQLite3DB: {}", e.what()));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("error during ~CppSQLite3DB: {}", e.what()));
     }
     catch (...)
     {
-        mConfig.log(CppSQLite3LogLevel::ERROR, fmt::format("unknown error during ~CppSQLite3DB"));
+        mConfig.log(CppSQLite3LogLevel::error, fmt::format("unknown error during ~CppSQLite3DB"));
     }
 }
 
@@ -787,7 +787,7 @@ bool CppSQLite3DB::isOpened() const
 }
 
 
-CppSQLite3Statement CppSQLite3DB::compileStatement(const char* szSQL)
+CppSQLite3Statement CppSQLite3DB::compileStatement(CppSQLite3StringView szSQL)
 {
     checkDB();
 
@@ -813,7 +813,7 @@ int CppSQLite3DB::execDML(CppSQLite3StringView szSQL)
     char* szError = 0;
 
 
-    mConfig.log(CppSQLite3LogLevel::VERBOSE, szSQL);
+    mConfig.log(CppSQLite3LogLevel::verbose, szSQL);
 
     int nRet = sqlite3_exec(mConfig.db, szSQL.c_str(), 0, 0, &szError);
 
@@ -845,7 +845,7 @@ CppSQLite3Query CppSQLite3DB::execQuery(CppSQLite3StringView szSQL)
 
     sqlite3_stmt* pVM = compile(szSQL);
 
-    mConfig.log(CppSQLite3LogLevel::VERBOSE, szSQL);
+    mConfig.log(CppSQLite3LogLevel::verbose, szSQL);
 
     int nRet = sqlite3_step(pVM);
 

@@ -67,10 +67,10 @@ struct CppSQLite3LogLevel
 {
     enum Level
     {
-        VERBOSE,
-        INFO,
-        WARNING,
-        ERROR
+        verbose,
+        info,
+        warning,
+        error
     } code;
     std::string_view name;
 
@@ -238,7 +238,7 @@ public:
 
     int execScalar(CppSQLite3StringView szSQL);
 
-    CppSQLite3Statement compileStatement(const char* szSQL);
+    CppSQLite3Statement compileStatement(CppSQLite3StringView szSQL);
 
     sqlite_int64 lastRowId() const;
 

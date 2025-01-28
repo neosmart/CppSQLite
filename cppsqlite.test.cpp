@@ -149,7 +149,7 @@ TEST(OpenCloseTest, destructWithoutFinalizingQuery)
         db.setLogHandler(
             [](CppSQLite3LogLevel level, std::string_view message)
             {
-                ASSERT_EQ(CppSQLite3LogLevel::ERROR, level.code);
+                ASSERT_EQ(CppSQLite3LogLevel::error, level.code);
                 getRecords().emplace_back(message);
             });
         db.open(":memory:");
@@ -235,7 +235,7 @@ TEST(CppSQLite3DBTest, verboseLoggingWithCustomHandler)
     db.setLogHandler(
         [](CppSQLite3LogLevel level, std::string_view message)
         {
-            ASSERT_EQ(level.code, CppSQLite3LogLevel::VERBOSE);
+            ASSERT_EQ(level.code, CppSQLite3LogLevel::verbose);
             ASSERT_EQ(level.name, "Verbose");
             getRecords().emplace_back(message);
         });
