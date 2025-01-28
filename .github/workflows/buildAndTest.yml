@@ -65,7 +65,7 @@ jobs:
         # skx/github-action-publish-binaries doesn't run on windows runners
         # at the time of writing this
         if: ${{ github.event_name == 'release' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cppsqlite3-${{matrix.BUILD_TYPE}}-${{matrix.os}}-${{github.run_id}}
           path: build/CppSQLite3-*.zip
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Unstash artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: cppsqlite3-${{matrix.artifact_build_type}}-${{matrix.artifact_os}}-${{github.run_id}}
           
