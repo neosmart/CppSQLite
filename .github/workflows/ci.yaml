@@ -1,0 +1,38 @@
+name: CppSQLite CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build static library (CppSQLite3.o/CppSQLite3.obj)
+      run: |
+        c++ -std=c++11 -c src/CppSQLite3.cpp -o CppSQLite3.o
+
+    - name: Build and run test program
+      if: runner.os != 'Windows'
+      run: |
+        c++ -std=c++11 src/test.cpp src/CppSQLite3.cpp -lsqlite3 -o testprog
+        ./testprog
+      shell: bash
+
+    # Windows expects .exe and uses different shell
+    - name: Build and run test program
+      if: runner.os == 'Windows'
+      run: |
+        cl /EHsc /MD src/test.cpp src/CppSQLite3.cpp /I. /link sqlite3.lib
+        testprog.exe
+      shell: cmd
