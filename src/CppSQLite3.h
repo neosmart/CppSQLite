@@ -8,8 +8,7 @@
 #ifndef CppSQLite3_H
 #define CppSQLite3_H
 
-#include <cstdio>
-#include <cstring>
+#include <cstddef>
 #include <exception>
 #include <sqlite3.h>
 
