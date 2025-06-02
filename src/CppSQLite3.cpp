@@ -1222,7 +1222,7 @@ sqlite3_stmt *CppSQLite3DB::compile(const char *szSQL) {
 ** string, excluding the "\000" terminator.
 */
 int sqlite3_encode_binary(const unsigned char *in, int n, unsigned char *out) {
-    int i, j, e, m;
+    int i, j, e = 0, m;
     int cnt[256];
     if (n <= 0) {
         out[0] = 'x';
@@ -1294,7 +1294,7 @@ int sqlite3_decode_binary(const unsigned char *in, unsigned char *out) {
                 return -1;
             }
         }
-        out[i++] = (c + e) & 0xff;
+        out[i++] = static_cast<unsigned char>((c + e) & 0xff);
     }
     return i;
 }
