@@ -57,7 +57,9 @@ SQLite3Memory::SQLite3Memory(SQLite3Memory const &other)
         throw CppSQLite3Exception(CPPSQLITE_ERROR, ALLOCATION_ERROR_MESSAGE,
                                   DONT_DELETE_MSG);
     }
-    std::memcpy(mpBuf, other.mpBuf, mnBufferLen);
+    if (mnBufferLen > 0) {
+        std::memcpy(mpBuf, other.mpBuf, mnBufferLen);
+    }
 }
 
 SQLite3Memory &SQLite3Memory::operator=(SQLite3Memory const &lhs) {
