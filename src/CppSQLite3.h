@@ -72,7 +72,7 @@ public:
 
     virtual ~CppSQLite3Exception();
 
-    const int errorCode() const { return mnErrCode; }
+    int errorCode() const { return mnErrCode; }
 
     const char* errorMessage() const { return mpszErrMess; }
 
