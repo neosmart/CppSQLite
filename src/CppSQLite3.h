@@ -309,7 +309,7 @@ public:
 
     CppSQLite3Query execQuery(const char* szSQL);
 
-    int execScalar(const char* szSQL);
+    int execScalar(const char* szSQL, int nNullSentinel = 0);
 
     CppSQLite3Table getTable(const char* szSQL);
 

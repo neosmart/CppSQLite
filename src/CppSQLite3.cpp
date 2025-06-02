@@ -1350,7 +1350,7 @@ CppSQLite3Query CppSQLite3DB::execQuery(const char* szSQL)
 }
 
 
-int CppSQLite3DB::execScalar(const char* szSQL)
+int CppSQLite3DB::execScalar(const char* szSQL, int nNullSentinel)
 {
     CppSQLite3Query q = execQuery(szSQL);
 
@@ -1361,7 +1361,7 @@ int CppSQLite3DB::execScalar(const char* szSQL)
                                 DONT_DELETE_MSG);
     }
 
-    return atoi(q.fieldValue(0));
+    return q.getIntField(0, nNullSentinel);
 }
 
 
