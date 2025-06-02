@@ -35,8 +35,8 @@ SQLite3Memory::SQLite3Memory() :
 {
 }
 
-SQLite3Memory::SQLite3Memory(int nBufferLen) :
-    mpBuf(sqlite3_malloc(nBufferLen)),
+SQLite3Memory::SQLite3Memory(size_t nBufferLen) :
+    mpBuf(sqlite3_malloc(static_cast<int>(nBufferLen))),
     mnBufferLen(nBufferLen)
 {
     if (!mpBuf && mnBufferLen>0)
@@ -66,7 +66,7 @@ SQLite3Memory::~SQLite3Memory()
 }
 
 SQLite3Memory::SQLite3Memory(SQLite3Memory const& other) :
-    mpBuf(sqlite3_malloc(other.mnBufferLen)),
+    mpBuf(sqlite3_malloc(static_cast<int>(other.mnBufferLen))),
     mnBufferLen(other.mnBufferLen)
 {
     if (!mpBuf && mnBufferLen>0)
@@ -128,7 +128,7 @@ CppSQLite3Exception::CppSQLite3Exception(const int nErrCode,
 
     if (bDeleteMsg && szErrMess)
     {
-        sqlite3_free((void*)szErrMess);
+        sqlite3_free(static_cast<void*>(const_cast<char*>(szErrMess)));
     }
 }
 
@@ -238,7 +238,7 @@ CppSQLite3Binary::~CppSQLite3Binary()
 }
 
 
-void CppSQLite3Binary::setBinary(const unsigned char* pBuf, int nLen)
+void CppSQLite3Binary::setBinary(const unsigned char* pBuf, size_t nLen)
 {
     mpBuf = allocBuffer(nLen);
     memcpy(mpBuf, pBuf, nLen);
@@ -249,10 +249,10 @@ void CppSQLite3Binary::setEncoded(const unsigned char* pBuf)
 {
     clear();
 
-    mnEncodedLen = strlen((const char*)pBuf);
+    mnEncodedLen = strlen(reinterpret_cast<const char*>(pBuf));
     mnBufferLen = mnEncodedLen + 1; // Allow for NULL terminator
 
-    mpBuf = (unsigned char*)malloc(mnBufferLen);
+    mpBuf = reinterpret_cast<unsigned char*>(malloc(mnBufferLen));
 
     if (!mpBuf)
     {
@@ -270,9 +270,9 @@ const unsigned char* CppSQLite3Binary::getEncoded()
 {
     if (!mbEncoded)
     {
-        unsigned char* ptmp = (unsigned char*)malloc(mnBinaryLen);
+        unsigned char* ptmp = reinterpret_cast<unsigned char*>(malloc(mnBinaryLen));
         memcpy(ptmp, mpBuf, mnBinaryLen);
-        mnEncodedLen = sqlite3_encode_binary(ptmp, mnBinaryLen, mpBuf);
+        mnEncodedLen = static_cast<size_t>(sqlite3_encode_binary(ptmp, static_cast<int>(mnBinaryLen), mpBuf));
         free(ptmp);
         mbEncoded = true;
     }
@@ -286,15 +286,15 @@ const unsigned char* CppSQLite3Binary::getBinary()
     if (mbEncoded)
     {
         // in/out buffers can be the same
-        mnBinaryLen = sqlite3_decode_binary(mpBuf, mpBuf);
+        int result = sqlite3_decode_binary(mpBuf, mpBuf);
 
-        if (mnBinaryLen == -1)
+        if (result == -1)
         {
             throw CppSQLite3Exception(CPPSQLITE_ERROR,
                                     "Cannot decode binary",
                                     DONT_DELETE_MSG);
         }
-
+        mnBinaryLen = static_cast<size_t>(result);
         mbEncoded = false;
     }
 
@@ -302,14 +302,14 @@ const unsigned char* CppSQLite3Binary::getBinary()
 }
 
 
-int CppSQLite3Binary::getBinaryLength()
+size_t CppSQLite3Binary::getBinaryLength()
 {
     getBinary();
     return mnBinaryLen;
 }
 
 
-unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
+unsigned char* CppSQLite3Binary::allocBuffer(size_t nLen)
 {
     clear();
 
@@ -319,7 +319,7 @@ unsigned char* CppSQLite3Binary::allocBuffer(int nLen)
     mnBinaryLen = nLen;
     mnBufferLen = 3 + (257*nLen)/254;
 
-    mpBuf = (unsigned char*)malloc(mnBufferLen);
+    mpBuf = static_cast<unsigned char*>(malloc(mnBufferLen));
 
     if (!mpBuf)
     {
@@ -430,14 +430,14 @@ const char* CppSQLite3Query::fieldValue(int nField) const
                                 DONT_DELETE_MSG);
     }
 
-    return (const char*)sqlite3_column_text(mpVM, nField);
+    return reinterpret_cast<const char*>(sqlite3_column_text(mpVM, nField));
 }
 
 
 const char* CppSQLite3Query::fieldValue(const char* szField) const
 {
     int nField = fieldIndex(szField);
-    return (const char*)sqlite3_column_text(mpVM, nField);
+    return reinterpret_cast<const char*>(sqlite3_column_text(mpVM, nField));
 }
 
 
@@ -529,7 +529,7 @@ const char* CppSQLite3Query::getStringField(int nField, const char* szNullValue/
     }
     else
     {
-        return (const char*)sqlite3_column_text(mpVM, nField);
+        return reinterpret_cast<const char*>(sqlite3_column_text(mpVM, nField));
     }
 }
 
@@ -541,7 +541,7 @@ const char* CppSQLite3Query::getStringField(const char* szField, const char* szN
 }
 
 
-const unsigned char* CppSQLite3Query::getBlobField(int nField, int& nLen) const
+const unsigned char* CppSQLite3Query::getBlobField(int nField, size_t& nLen) const
 {
     checkVM();
 
@@ -552,12 +552,12 @@ const unsigned char* CppSQLite3Query::getBlobField(int nField, int& nLen) const
                                 DONT_DELETE_MSG);
     }
 
-    nLen = sqlite3_column_bytes(mpVM, nField);
-    return (const unsigned char*)sqlite3_column_blob(mpVM, nField);
+    nLen = static_cast<size_t>(sqlite3_column_bytes(mpVM, nField));
+    return reinterpret_cast<const unsigned char*>(sqlite3_column_blob(mpVM, nField));
 }
 
 
-const unsigned char* CppSQLite3Query::getBlobField(const char* szField, int& nLen) const
+const unsigned char* CppSQLite3Query::getBlobField(const char* szField, size_t& nLen) const
 {
     int nField = fieldIndex(szField);
     return getBlobField(nField, nLen);
@@ -1147,11 +1147,11 @@ void CppSQLite3Statement::bind(int nParam, const double dValue)
 }
 
 
-void CppSQLite3Statement::bind(int nParam, const unsigned char* blobValue, int nLen)
+void CppSQLite3Statement::bind(int nParam, const unsigned char* blobValue, size_t nLen)
 {
     checkVM();
-    int nRes = sqlite3_bind_blob(mpVM, nParam,
-                                (const void*)blobValue, nLen, SQLITE_TRANSIENT);
+    int nRes = sqlite3_bind_blob(mpVM, nParam, static_cast<const void*>(blobValue),
+            static_cast<int>(nLen), SQLITE_TRANSIENT);
 
     if (nRes != SQLITE_OK)
     {

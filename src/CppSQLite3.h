@@ -27,7 +27,7 @@ namespace detail
         // Default constructor
         SQLite3Memory();
         // Constructor that allocates memory of a given size
-        SQLite3Memory(int nBufferLen);
+        SQLite3Memory(size_t nBufferLen);
         // Constructor that formats a string with sqlite memory allocation
         SQLite3Memory(const char* szFormat, va_list list);
         // Destructor
@@ -46,7 +46,7 @@ namespace detail
         // Swap operation
         void swap(SQLite3Memory& other);
 
-        int getLength() const { return mnBufferLen; }
+        size_t getLength() const { return mnBufferLen; }
 
         void* getBuffer() const { return mpBuf; }
 
@@ -55,7 +55,7 @@ namespace detail
     private:
 
         void* mpBuf;
-        int mnBufferLen;
+        size_t mnBufferLen;
     };
 }
 
@@ -110,24 +110,24 @@ public:
 
     ~CppSQLite3Binary();
 
-    void setBinary(const unsigned char* pBuf, int nLen);
+    void setBinary(const unsigned char* pBuf, size_t nLen);
     void setEncoded(const unsigned char* pBuf);
 
     const unsigned char* getEncoded();
     const unsigned char* getBinary();
 
-    int getBinaryLength();
+    size_t getBinaryLength();
 
-    unsigned char* allocBuffer(int nLen);
+    unsigned char* allocBuffer(size_t nLen);
 
     void clear();
 
 private:
 
     unsigned char* mpBuf;
-    int mnBinaryLen;
-    int mnBufferLen;
-    int mnEncodedLen;
+    size_t mnBinaryLen;
+    size_t mnBufferLen;
+    size_t mnEncodedLen;
     bool mbEncoded;
 };
 
@@ -175,8 +175,8 @@ public:
     const char* getStringField(int nField, const char* szNullValue="") const;
     const char* getStringField(const char* szField, const char* szNullValue="") const;
 
-    const unsigned char* getBlobField(int nField, int& nLen) const;
-    const unsigned char* getBlobField(const char* szField, int& nLen) const;
+    const unsigned char* getBlobField(int nField, size_t& nLen) const;
+    const unsigned char* getBlobField(const char* szField, size_t& nLen) const;
 
     bool fieldIsNull(int nField) const;
     bool fieldIsNull(const char* szField) const;
@@ -274,7 +274,7 @@ public:
     void bind(int nParam, const int nValue);
     void bind(int nParam, const long long nValue);
     void bind(int nParam, const double dwValue);
-    void bind(int nParam, const unsigned char* blobValue, int nLen);
+    void bind(int nParam, const unsigned char* blobValue, size_t nLen);
     void bindNull(int nParam);
 
     void reset();
