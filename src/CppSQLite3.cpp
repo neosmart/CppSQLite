@@ -30,14 +30,14 @@ namespace detail
 {
 
 SQLite3Memory::SQLite3Memory() :
-    mnBufferLen(0),
-    mpBuf(nullptr)
+    mpBuf(nullptr),
+    mnBufferLen(0)
 {
 }
 
 SQLite3Memory::SQLite3Memory(int nBufferLen) :
-    mnBufferLen(nBufferLen),
-    mpBuf(sqlite3_malloc(nBufferLen))
+    mpBuf(sqlite3_malloc(nBufferLen)),
+    mnBufferLen(nBufferLen)
 {
     if (!mpBuf && mnBufferLen>0)
     {
@@ -48,8 +48,8 @@ SQLite3Memory::SQLite3Memory(int nBufferLen) :
 }
 
 SQLite3Memory::SQLite3Memory(const char* szFormat, va_list list) :
-    mnBufferLen(0),
-    mpBuf(sqlite3_vmprintf(szFormat, list))
+    mpBuf(sqlite3_vmprintf(szFormat, list)),
+    mnBufferLen(0)
 {
     if (!mpBuf)
     {
@@ -66,8 +66,8 @@ SQLite3Memory::~SQLite3Memory()
 }
 
 SQLite3Memory::SQLite3Memory(SQLite3Memory const& other) :
-    mnBufferLen(other.mnBufferLen),
-    mpBuf(sqlite3_malloc(other.mnBufferLen))
+    mpBuf(sqlite3_malloc(other.mnBufferLen)),
+    mnBufferLen(other.mnBufferLen)
 {
     if (!mpBuf && mnBufferLen>0)
     {
@@ -86,8 +86,8 @@ SQLite3Memory& SQLite3Memory::operator=(SQLite3Memory const& lhs)
 }
 
 SQLite3Memory::SQLite3Memory(SQLite3Memory&& other) :
-    mnBufferLen(other.mnBufferLen),
-    mpBuf(other.mpBuf)
+    mpBuf(other.mpBuf),
+    mnBufferLen(other.mnBufferLen)
 {
     other.mnBufferLen = 0;
     other.mpBuf = nullptr;

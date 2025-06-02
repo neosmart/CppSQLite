@@ -54,8 +54,8 @@ namespace detail
 
     private:
 
-        int mnBufferLen;
         void* mpBuf;
+        int mnBufferLen;
     };
 }
 
@@ -82,8 +82,8 @@ public:
 
 private:
 
-    int mnErrCode;
     char* mpszErrMess;
+    int mnErrCode;
 };
 
 
@@ -193,8 +193,8 @@ private:
 
     sqlite3* mpDB;
     sqlite3_stmt* mpVM;
-    bool mbEof;
     int mnCols;
+    bool mbEof;
     bool mbOwnVM;
 };
 
@@ -245,10 +245,10 @@ private:
 
     void checkResults() const;
 
+    char** mpaszResults;
     int mnCols;
     int mnRows;
     int mnCurrentRow;
-    char** mpaszResults;
 };
 
 
