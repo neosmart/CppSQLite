@@ -203,7 +203,7 @@ void CppSQLite3Buffer::clear()
 const char* CppSQLite3Buffer::format(const char* szFormat, ...)
 {
     va_list va;
-    detail::SQLite3Memory tmpBuf; 
+    detail::SQLite3Memory tmpBuf;
     try
     {
         va_start(va, szFormat);
