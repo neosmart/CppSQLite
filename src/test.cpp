@@ -1,6 +1,6 @@
 #include "CppSQLite3.h"
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 int main() {
     try {
@@ -21,7 +21,7 @@ int main() {
             int cnt = 0;
             while (!q.eof()) {
                 int id = q.getIntField("id");
-                const char* name = q.getStringField("name");
+                const char *name = q.getStringField("name");
                 std::cout << "Row " << id << ": " << name << std::endl;
                 q.nextRow();
                 ++cnt;
@@ -41,7 +41,7 @@ int main() {
         db.close();
         std::cout << "CppSQLite basic tests passed!" << std::endl;
         return 0;
-    } catch(const CppSQLite3Exception& e) {
+    } catch (const CppSQLite3Exception &e) {
         std::cerr << "CppSQLite3Exception: " << e.errorMessage() << std::endl;
         return 1;
     }
