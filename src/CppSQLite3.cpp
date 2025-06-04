@@ -1038,7 +1038,7 @@ CppSQLite3Query CppSQLite3DB::execQuery(const char *szSQL) {
     }
 }
 
-int CppSQLite3DB::execScalar(const char *szSQL, int nNullSentinel) {
+int CppSQLite3DB::execScalar(const char *szSQL, int nNullSentinel /*=0*/) {
     CppSQLite3Query q = execQuery(szSQL);
 
     if (q.eof() || q.numFields() < 1) {
