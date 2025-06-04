@@ -14,6 +14,12 @@
 
 #define CPPSQLITE_ERROR 1000
 
+#if defined(__GNUC__) || defined(__clang__)
+#define CPPSQLITE_ATTR_CONST __attribute__((const))
+#else
+#define CPPSQLITE_ATTR_CONST
+#endif
+
 namespace detail {
 /**
  * RAII class for managing memory allocated by sqlite
@@ -69,7 +75,7 @@ class CppSQLite3Exception : public std::exception {
 
     const char *what() const noexcept override { return mpszErrMess; }
 
-    static const char *errorCodeAsString(int nErrCode);
+    static const char *errorCodeAsString(int nErrCode) CPPSQLITE_ATTR_CONST;
 
   private:
     char *mpszErrMess;
@@ -306,4 +312,5 @@ class CppSQLite3DB {
     int mnBusyTimeoutMs;
 };
 
+#undef CPPSQLITE_ATTR_CONST
 #endif
