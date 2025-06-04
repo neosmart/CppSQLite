@@ -356,7 +356,7 @@ int CppSQLite3Query::numFields() const {
 const char *CppSQLite3Query::fieldValue(int nField) const {
     checkVM();
 
-    if (nField < 0 || nField > mnCols - 1) {
+    if (nField < 0 || nField >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -450,7 +450,7 @@ const unsigned char *CppSQLite3Query::getBlobField(int nField,
                                                    size_t &nLen) const {
     checkVM();
 
-    if (nField < 0 || nField > mnCols - 1) {
+    if (nField < 0 || nField >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -495,7 +495,7 @@ int CppSQLite3Query::fieldIndex(const char *szField) const {
 const char *CppSQLite3Query::fieldName(int nCol) const {
     checkVM();
 
-    if (nCol < 0 || nCol > mnCols - 1) {
+    if (nCol < 0 || nCol >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -506,7 +506,7 @@ const char *CppSQLite3Query::fieldName(int nCol) const {
 const char *CppSQLite3Query::fieldDeclType(int nCol) const {
     checkVM();
 
-    if (nCol < 0 || nCol > mnCols - 1) {
+    if (nCol < 0 || nCol >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -517,7 +517,7 @@ const char *CppSQLite3Query::fieldDeclType(int nCol) const {
 int CppSQLite3Query::fieldDataType(int nCol) const {
     checkVM();
 
-    if (nCol < 0 || nCol > mnCols - 1) {
+    if (nCol < 0 || nCol >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -632,7 +632,7 @@ int CppSQLite3Table::numRows() const {
 const char *CppSQLite3Table::fieldValue(int nField) const {
     checkResults();
 
-    if (nField < 0 || nField > mnCols - 1) {
+    if (nField < 0 || nField >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -743,7 +743,7 @@ bool CppSQLite3Table::fieldIsNull(const char *szField) const {
 const char *CppSQLite3Table::fieldName(int nCol) const {
     checkResults();
 
-    if (nCol < 0 || nCol > mnCols - 1) {
+    if (nCol < 0 || nCol >= mnCols) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid field index requested", DONT_DELETE_MSG);
     }
@@ -754,7 +754,7 @@ const char *CppSQLite3Table::fieldName(int nCol) const {
 void CppSQLite3Table::setRow(int nRow) {
     checkResults();
 
-    if (nRow < 0 || nRow > mnRows - 1) {
+    if (nRow < 0 || nRow >= mnRows) {
         throw CppSQLite3Exception(
             CPPSQLITE_ERROR, "Invalid row index requested", DONT_DELETE_MSG);
     }
