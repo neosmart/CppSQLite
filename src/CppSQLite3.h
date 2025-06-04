@@ -67,7 +67,7 @@ class CppSQLite3Exception : public std::exception {
 
     CppSQLite3Exception(const CppSQLite3Exception &e);
 
-    virtual ~CppSQLite3Exception();
+    virtual ~CppSQLite3Exception() override;
 
     int errorCode() const { return mnErrCode; }
 
