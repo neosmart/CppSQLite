@@ -60,10 +60,22 @@ TEST(ExecQueryTest, selectOneRow)
 TEST(DbTest, openNonExistentFileInReadOnly_ShouldThrow)
 {
     CppSQLite3DB db;
-    EXPECT_THROW_WITH_MSG(db.open("nowhere.sqlite", SQLITE_OPEN_READONLY), CppSQLite3Exception,
+   EXPECT_THROW_WITH_MSG(db.open("nowhere.sqlite", SQLITE_OPEN_READONLY), CppSQLite3Exception,
                           "SQLITE_CANTOPEN[14]: unable to open database file");
 }
-
+TEST(DbTest, openDir_ShouldThrow)
+{
+    //checks that the extended error code is appended to the message 
+    CppSQLite3DB db;
+     auto tmp_dir = std::filesystem::temp_directory_path() / "openDir_ShouldThrow";
+    if (!std::filesystem::create_directory(tmp_dir)) {
+        std::cout << "Test cannot run: Failed to create test directory" << std::endl;
+        return;
+    }
+    EXPECT_THROW_WITH_MSG(db.open(tmp_dir.string().c_str(), SQLITE_OPEN_READONLY), CppSQLite3Exception,
+                          "SQLITE_CANTOPEN[14]: unable to open database file (SQLITE_CANTOPEN_ISDIR)");
+    std::filesystem::remove(tmp_dir);
+}
 TEST(DbTest, writingToReadOnlyDatabaseShouldFail)
 {
     CppSQLite3DB db;

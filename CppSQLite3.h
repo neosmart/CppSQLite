@@ -77,7 +77,7 @@ struct CppSQLite3LogLevel
     explicit CppSQLite3LogLevel(Level level);
 };
 
-using CppSQLite3ErrorHandler = void (*)(int /*sqlite3_error_code*/, std::string_view /* message */,
+using CppSQLite3ErrorHandler = void (*)(int /*sqlite3_error_code*/, int /*sqlite3_extended_error_code*/, std::string_view /* message */,
                                         std::string_view /* context */);
 using CppSQLite3LogHandler = void (*)(CppSQLite3LogLevel /*level*/, std::string_view /*message */);
 
@@ -94,6 +94,7 @@ public:
 
     static std::string_view errorCodeAsString(int nErrCode);
 
+    static std::string_view extendedErrorCodeAsString(int nErrCode);
 private:
     int mnErrCode;
 };
@@ -106,6 +107,7 @@ struct CppSQLite3Config
     CppSQLite3LogHandler logHandler;
     bool enableVerboseLogging = false;
     void log(CppSQLite3LogLevel::Level level, CppSQLite3StringView message);
+    void callErrorHandler(int nRet, const char* szError, const char* msg);
 };
 
 class CppSQLite3Query
@@ -269,7 +271,7 @@ public:
 
 private:
     sqlite3_stmt* compile(CppSQLite3StringView szSQL);
-
+    
     void checkDB() const;
     CppSQLite3Config mConfig;
     int mnBusyTimeoutMs;

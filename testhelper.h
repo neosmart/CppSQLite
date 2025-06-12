@@ -39,7 +39,7 @@ public:
     }
 };
 
-void throwException(int code, std::string_view msg, std::string_view context)
+void throwException(int code, int extendedErrorCode, std::string_view msg, std::string_view context)
 {
     std::string finalMsg = std::string(msg);
     if (!context.empty())
@@ -49,8 +49,11 @@ void throwException(int code, std::string_view msg, std::string_view context)
     if (code != SQLITE_ERROR)
     {
         finalMsg += fmt::format(" (Code {})", code);
+        if (code != extendedErrorCode)
+        {
+            finalMsg += fmt::format(" (EECode {})", extendedErrorCode);
+        }
     }
-
     if (code == SQLITE_ERROR)
     {
         throw CustomExceptions::InvalidQuery(finalMsg);

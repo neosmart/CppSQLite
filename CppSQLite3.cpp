@@ -14,16 +14,24 @@
 
 #include <iostream>
 
+#define NAMEOF(x) #x
 namespace
 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void defaultErrorHandler(int nErrorCode, std::string_view errorMessage, std::string_view /* context*/)
+void defaultErrorHandler(int nErrorCode, int extendedErrorCode, std::string_view errorMessage,
+                         std::string_view /* context*/)
 {
-    std::string msg =
-        fmt::format("{:s}[{:d}]: {:s}", CppSQLite3Exception::errorCodeAsString(nErrorCode), nErrorCode, errorMessage);
-
+    std::string msg;
+    if (extendedErrorCode != nErrorCode) {
+        msg = fmt::format("{:s}[{:d}]: {:s} ({:s})", CppSQLite3Exception::errorCodeAsString(nErrorCode),
+                                  nErrorCode, errorMessage, CppSQLite3Exception::errorCodeAsString(extendedErrorCode));
+    }
+    else {
+        msg = fmt::format("{:s}[{:d}]: {:s}", CppSQLite3Exception::errorCodeAsString(nErrorCode),
+            nErrorCode, errorMessage);
+    }
     throw CppSQLite3Exception(nErrorCode, msg);
 }
 
@@ -78,6 +86,12 @@ void CppSQLite3Config::log(CppSQLite3LogLevel::Level level, CppSQLite3StringView
     }
 }
 
+void CppSQLite3Config::callErrorHandler(int nRet, const char* szError, const char* msg)
+{
+
+    int extendedErrorCode = sqlite3_extended_errcode(db);
+    errorHandler(nRet, extendedErrorCode, szError, msg);
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -150,10 +164,171 @@ std::string_view CppSQLite3Exception::errorCodeAsString(int nErrCode)
     case CPPSQLITE_ERROR:
         return "CPPSQLITE_ERROR";
     default:
+        return extendedErrorCodeAsString(nErrCode);
+    }
+}
+std::string_view CppSQLite3Exception::extendedErrorCodeAsString(int nErrCode)
+{
+    switch (nErrCode)
+    {
+    case SQLITE_ERROR_MISSING_COLLSEQ:
+        return NAMEOF(SQLITE_ERROR_MISSING_COLLSEQ);
+    case SQLITE_ERROR_RETRY:
+        return NAMEOF(SQLITE_ERROR_RETRY);
+    case SQLITE_ERROR_SNAPSHOT:
+        return NAMEOF(SQLITE_ERROR_SNAPSHOT);
+    case SQLITE_IOERR_READ:
+        return NAMEOF(SQLITE_IOERR_READ);
+    case SQLITE_IOERR_SHORT_READ:
+        return NAMEOF(SQLITE_IOERR_SHORT_READ);
+    case SQLITE_IOERR_WRITE:
+        return NAMEOF(SQLITE_IOERR_WRITE);
+    case SQLITE_IOERR_FSYNC:
+        return NAMEOF(SQLITE_IOERR_FSYNC);
+    case SQLITE_IOERR_DIR_FSYNC:
+        return NAMEOF(SQLITE_IOERR_DIR_FSYNC);
+    case SQLITE_IOERR_TRUNCATE:
+        return NAMEOF(SQLITE_IOERR_TRUNCATE);
+    case SQLITE_IOERR_FSTAT:
+        return NAMEOF(SQLITE_IOERR_FSTAT);
+    case SQLITE_IOERR_UNLOCK:
+        return NAMEOF(SQLITE_IOERR_UNLOCK);
+    case SQLITE_IOERR_RDLOCK:
+        return NAMEOF(SQLITE_IOERR_RDLOCK);
+    case SQLITE_IOERR_DELETE:
+        return NAMEOF(SQLITE_IOERR_DELETE);
+    case SQLITE_IOERR_BLOCKED:
+        return NAMEOF(SQLITE_IOERR_BLOCKED);
+    case SQLITE_IOERR_NOMEM:
+        return NAMEOF(SQLITE_IOERR_NOMEM);
+    case SQLITE_IOERR_ACCESS:
+        return NAMEOF(SQLITE_IOERR_ACCESS);
+    case SQLITE_IOERR_CHECKRESERVEDLOCK:
+        return NAMEOF(SQLITE_IOERR_CHECKRESERVEDLOCK);
+    case SQLITE_IOERR_LOCK:
+        return NAMEOF(SQLITE_IOERR_LOCK);
+    case SQLITE_IOERR_CLOSE:
+        return NAMEOF(SQLITE_IOERR_CLOSE);
+    case SQLITE_IOERR_DIR_CLOSE:
+        return NAMEOF(SQLITE_IOERR_DIR_CLOSE);
+    case SQLITE_IOERR_SHMOPEN:
+        return NAMEOF(SQLITE_IOERR_SHMOPEN);
+    case SQLITE_IOERR_SHMSIZE:
+        return NAMEOF(SQLITE_IOERR_SHMSIZE);
+    case SQLITE_IOERR_SHMLOCK:
+        return NAMEOF(SQLITE_IOERR_SHMLOCK);
+    case SQLITE_IOERR_SHMMAP:
+        return NAMEOF(SQLITE_IOERR_SHMMAP);
+    case SQLITE_IOERR_SEEK:
+        return NAMEOF(SQLITE_IOERR_SEEK);
+    case SQLITE_IOERR_DELETE_NOENT:
+        return NAMEOF(SQLITE_IOERR_DELETE_NOENT);
+    case SQLITE_IOERR_MMAP:
+        return NAMEOF(SQLITE_IOERR_MMAP);
+    case SQLITE_IOERR_GETTEMPPATH:
+        return NAMEOF(SQLITE_IOERR_GETTEMPPATH);
+    case SQLITE_IOERR_CONVPATH:
+        return NAMEOF(SQLITE_IOERR_CONVPATH);
+    case SQLITE_IOERR_VNODE:
+        return NAMEOF(SQLITE_IOERR_VNODE);
+    case SQLITE_IOERR_AUTH:
+        return NAMEOF(SQLITE_IOERR_AUTH);
+    case SQLITE_IOERR_BEGIN_ATOMIC:
+        return NAMEOF(SQLITE_IOERR_BEGIN_ATOMIC);
+    case SQLITE_IOERR_COMMIT_ATOMIC:
+        return NAMEOF(SQLITE_IOERR_COMMIT_ATOMIC);
+    case SQLITE_IOERR_ROLLBACK_ATOMIC:
+        return NAMEOF(SQLITE_IOERR_ROLLBACK_ATOMIC);
+    case SQLITE_IOERR_DATA:
+        return NAMEOF(SQLITE_IOERR_DATA);
+    case SQLITE_IOERR_CORRUPTFS:
+        return NAMEOF(SQLITE_IOERR_CORRUPTFS);
+    case SQLITE_IOERR_IN_PAGE:
+        return NAMEOF(SQLITE_IOERR_IN_PAGE);
+    case SQLITE_LOCKED_SHAREDCACHE:
+        return NAMEOF(SQLITE_LOCKED_SHAREDCACHE);
+    case SQLITE_LOCKED_VTAB:
+        return NAMEOF(SQLITE_LOCKED_VTAB);
+    case SQLITE_BUSY_RECOVERY:
+        return NAMEOF(SQLITE_BUSY_RECOVERY);
+    case SQLITE_BUSY_SNAPSHOT:
+        return NAMEOF(SQLITE_BUSY_SNAPSHOT);
+    case SQLITE_BUSY_TIMEOUT:
+        return NAMEOF(SQLITE_BUSY_TIMEOUT);
+    case SQLITE_CANTOPEN_NOTEMPDIR:
+        return NAMEOF(SQLITE_CANTOPEN_NOTEMPDIR);
+    case SQLITE_CANTOPEN_ISDIR:
+        return NAMEOF(SQLITE_CANTOPEN_ISDIR);
+    case SQLITE_CANTOPEN_FULLPATH:
+        return NAMEOF(SQLITE_CANTOPEN_FULLPATH);
+    case SQLITE_CANTOPEN_CONVPATH:
+        return NAMEOF(SQLITE_CANTOPEN_CONVPATH);
+    case SQLITE_CANTOPEN_DIRTYWAL:
+        return NAMEOF(SQLITE_CANTOPEN_DIRTYWAL);
+    case SQLITE_CANTOPEN_SYMLINK:
+        return NAMEOF(SQLITE_CANTOPEN_SYMLINK);
+    case SQLITE_CORRUPT_VTAB:
+        return NAMEOF(SQLITE_CORRUPT_VTAB);
+    case SQLITE_CORRUPT_SEQUENCE:
+        return NAMEOF(SQLITE_CORRUPT_SEQUENCE);
+    case SQLITE_CORRUPT_INDEX:
+        return NAMEOF(SQLITE_CORRUPT_INDEX);
+    case SQLITE_READONLY_RECOVERY:
+        return NAMEOF(SQLITE_READONLY_RECOVERY);
+    case SQLITE_READONLY_CANTLOCK:
+        return NAMEOF(SQLITE_READONLY_CANTLOCK);
+    case SQLITE_READONLY_ROLLBACK:
+        return NAMEOF(SQLITE_READONLY_ROLLBACK);
+    case SQLITE_READONLY_DBMOVED:
+        return NAMEOF(SQLITE_READONLY_DBMOVED);
+    case SQLITE_READONLY_CANTINIT:
+        return NAMEOF(SQLITE_READONLY_CANTINIT);
+    case SQLITE_READONLY_DIRECTORY:
+        return NAMEOF(SQLITE_READONLY_DIRECTORY);
+    case SQLITE_ABORT_ROLLBACK:
+        return NAMEOF(SQLITE_ABORT_ROLLBACK);
+    case SQLITE_CONSTRAINT_CHECK:
+        return NAMEOF(SQLITE_CONSTRAINT_CHECK);
+    case SQLITE_CONSTRAINT_COMMITHOOK:
+        return NAMEOF(SQLITE_CONSTRAINT_COMMITHOOK);
+    case SQLITE_CONSTRAINT_FOREIGNKEY:
+        return NAMEOF(SQLITE_CONSTRAINT_FOREIGNKEY);
+    case SQLITE_CONSTRAINT_FUNCTION:
+        return NAMEOF(SQLITE_CONSTRAINT_FUNCTION);
+    case SQLITE_CONSTRAINT_NOTNULL:
+        return NAMEOF(SQLITE_CONSTRAINT_NOTNULL);
+    case SQLITE_CONSTRAINT_PRIMARYKEY:
+        return NAMEOF(SQLITE_CONSTRAINT_PRIMARYKEY);
+    case SQLITE_CONSTRAINT_TRIGGER:
+        return NAMEOF(SQLITE_CONSTRAINT_TRIGGER);
+    case SQLITE_CONSTRAINT_UNIQUE:
+        return NAMEOF(SQLITE_CONSTRAINT_UNIQUE);
+    case SQLITE_CONSTRAINT_VTAB:
+        return NAMEOF(SQLITE_CONSTRAINT_VTAB);
+    case SQLITE_CONSTRAINT_ROWID:
+        return NAMEOF(SQLITE_CONSTRAINT_ROWID);
+    case SQLITE_CONSTRAINT_PINNED:
+        return NAMEOF(SQLITE_CONSTRAINT_PINNED);
+    case SQLITE_CONSTRAINT_DATATYPE:
+        return NAMEOF(SQLITE_CONSTRAINT_DATATYPE);
+    case SQLITE_NOTICE_RECOVER_WAL:
+        return NAMEOF(SQLITE_NOTICE_RECOVER_WAL);
+    case SQLITE_NOTICE_RECOVER_ROLLBACK:
+        return NAMEOF(SQLITE_NOTICE_RECOVER_ROLLBACK);
+    case SQLITE_NOTICE_RBU:
+        return NAMEOF(SQLITE_NOTICE_RBU);
+    case SQLITE_WARNING_AUTOINDEX:
+        return NAMEOF(SQLITE_WARNING_AUTOINDEX);
+    case SQLITE_AUTH_USER:
+        return NAMEOF(SQLITE_AUTH_USER);
+    case SQLITE_OK_LOAD_PERMANENTLY:
+        return NAMEOF(SQLITE_OK_LOAD_PERMANENTLY);
+    case SQLITE_OK_SYMLINK:
+        return NAMEOF(SQLITE_OK_SYMLINK);
+    default:
         return "UNKNOWN_ERROR";
     }
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 CppSQLite3Query::CppSQLite3Query() : mConfig{}
@@ -360,16 +535,6 @@ const unsigned char* CppSQLite3Query::getBlobField(CppSQLite3StringView field, i
 }
 
 
-int CppSQLite3Query::getExtendedErrorCode() const
-{
-    if (mConfig.db != nullptr) {
-        return sqlite3_extended_errcode(mConfig.db);
-    }
-    else {
-        return -1;
-    }
-}
-
 bool CppSQLite3Query::fieldIsNull(int nField) const
 {
     return (fieldDataType(nField) == SQLITE_NULL);
@@ -473,7 +638,7 @@ void CppSQLite3Query::nextRow()
             mpVM = 0;
         }
         const char* szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRet, szError, "when getting next row");
+        mConfig.callErrorHandler(nRet, szError, "when getting next row");
     }
 }
 
@@ -487,7 +652,7 @@ void CppSQLite3Query::finalize()
         if (nRet != SQLITE_OK)
         {
             const char* szError = sqlite3_errmsg(mConfig.db);
-            mConfig.errorHandler(nRet, szError, "during finalize");
+            mConfig.callErrorHandler(nRet, szError, "during finalize");
         }
     }
 }
@@ -587,7 +752,7 @@ int CppSQLite3Statement::execDML()
         if (nRet != SQLITE_OK)
         {
             szError = sqlite3_errmsg(mConfig.db);
-            mConfig.errorHandler(nRet, szError, "when getting number of rows changed");
+            mConfig.callErrorHandler(nRet, szError, "when getting number of rows changed");
         }
 
         return nRowsChanged;
@@ -596,7 +761,7 @@ int CppSQLite3Statement::execDML()
     {
         nRet = sqlite3_reset(mpVM);
         szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRet, szError, "when executing DML statement");
+        mConfig.callErrorHandler(nRet, szError, "when executing DML statement");
         return 0;
     }
 }
@@ -625,7 +790,7 @@ CppSQLite3Query CppSQLite3Statement::execQuery()
     {
         nRet = sqlite3_reset(mpVM);
         const char* szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRet, szError, "when evaluating query");
+        mConfig.callErrorHandler(nRet, szError, "when evaluating query");
         return CppSQLite3Query();
     }
 }
@@ -723,7 +888,7 @@ void CppSQLite3Statement::checkReturnCode(int nRes, const char* context)
     if (nRes != SQLITE_OK)
     {
         const char* szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRes, szError, context);
+        mConfig.callErrorHandler(nRes, szError, context);
     }
 }
 
@@ -762,7 +927,7 @@ void CppSQLite3DB::open(CppSQLite3StringView fileName, int flags)
     {
         const char* szError = sqlite3_errmsg(mConfig.db);
         auto msg = fmt::format("when opening {:s}", fileName.c_str());
-        mConfig.errorHandler(nRet, szError, msg.c_str());
+        mConfig.callErrorHandler(nRet, szError, msg.c_str());
     }
 
     setBusyTimeout(mnBusyTimeoutMs);
@@ -781,7 +946,7 @@ void CppSQLite3DB::close()
         else
         {
             const char* szError = sqlite3_errmsg(mConfig.db);
-            mConfig.errorHandler(nRet, szError, "when closing connection");
+            mConfig.callErrorHandler(nRet, szError, "when closing connection");
         }
     }
 }
@@ -843,7 +1008,7 @@ int CppSQLite3DB::execDML(CppSQLite3StringView szSQL)
         {
             error = sqlite3_errmsg(mConfig.db);
         }
-        mConfig.errorHandler(nRet, error.c_str(), "when executing DML query");
+        mConfig.callErrorHandler(nRet, error.c_str(), "when executing DML query");
         return nRet;
     }
 }
@@ -873,7 +1038,7 @@ CppSQLite3Query CppSQLite3DB::execQuery(CppSQLite3StringView szSQL)
     {
         nRet = sqlite3_finalize(pVM);
         const char* szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRet, szError, "when evaluating query");
+        mConfig.callErrorHandler(nRet, szError, "when evaluating query");
         return CppSQLite3Query();
     }
 }
@@ -919,7 +1084,7 @@ void CppSQLite3DB::performCheckpoint(CppSQLite3StringView dbName, int mode)
     if (nRet != SQLITE_OK)
     {
         const char* szError = sqlite3_errmsg(mConfig.db);
-        mConfig.errorHandler(nRet, szError, "when performing checkpoint");
+        mConfig.callErrorHandler(nRet, szError, "when performing checkpoint");
     }
 }
 
@@ -946,7 +1111,8 @@ sqlite3_stmt* CppSQLite3DB::compile(CppSQLite3StringView szSQL)
 
     if (nRet != SQLITE_OK)
     {
-        mConfig.errorHandler(nRet, szError, "when compiling statement");
+
+        mConfig.callErrorHandler(nRet, szError, "when compiling statement");
     }
 
     return pVM;
