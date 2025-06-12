@@ -360,6 +360,16 @@ const unsigned char* CppSQLite3Query::getBlobField(CppSQLite3StringView field, i
 }
 
 
+int CppSQLite3Query::getExtendedErrorCode() const
+{
+    if (mConfig.db != nullptr) {
+        return sqlite3_extended_errcode(mConfig.db);
+    }
+    else {
+        return -1;
+    }
+}
+
 bool CppSQLite3Query::fieldIsNull(int nField) const
 {
     return (fieldDataType(nField) == SQLITE_NULL);

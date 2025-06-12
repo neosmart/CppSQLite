@@ -147,6 +147,8 @@ public:
     const unsigned char* getBlobField(int nField, int& nLen) const;
     const unsigned char* getBlobField(CppSQLite3StringView field, int& nLen) const;
 
+    int getExtendedErrorCode() const;
+
     bool fieldIsNull(int nField) const;
     bool fieldIsNull(CppSQLite3StringView field) const;
 
